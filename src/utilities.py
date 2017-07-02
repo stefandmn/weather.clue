@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import gzip
-import base64
 import urllib2
 import Commons as commons
 from StringIO import StringIO
-
-
-__waik__ = 'MWNmZDVhZjQzNjM4Mjc2Nw=='
-__wunderground_url__ = 'http://api.wunderground.com/api/%s/%s/%s/q/%s.%s'
 
 #http://www.wunderground.com/weather/api/d/docs?d=language-support
 LANG = {'afrikaans': 'AF',
@@ -214,7 +209,7 @@ def KPHTOBFT(spd):
 
 
 def wundergroundapi(features, settings, query, fmt):
-	url = __wunderground_url__ % (base64.b64decode(__waik__)[::-1], features, settings, query, fmt)
+	url = 'http://api.wunderground.com/api/%s/%s/%s/q/%s.%s' % (commons.setting("License")[::-1], features, settings, query, fmt)
 	try:
 		req = urllib2.Request(url)
 		req.add_header('Accept-encoding', 'gzip')

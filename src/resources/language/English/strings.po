@@ -62,7 +62,7 @@ msgid "Location 3 id"
 msgstr ""
 
 msgctxt "#32120"
-msgid "Enable logging"
+msgid "Wunderground API key"
 msgstr ""
 
 msgctxt "#32121"

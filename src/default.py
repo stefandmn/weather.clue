@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import json
+import base64
 import socket
 import unicodedata
 from utilities import *
@@ -16,6 +17,7 @@ import xbmcaddon
 import xbmcvfs
 
 
+FORMAT				= 'json'
 WUNDERGROUND_LOC	= 'http://autocomplete.wunderground.com/aq?query=%s&format=JSON'
 WEATHER_FEATURES	= 'hourly/conditions/forecast10day/astronomy/almanac/alerts/satellite'
 WEATHER_ICON		= xbmc.translatePath('special://temp/weather/%s.png').decode("utf-8")
@@ -27,9 +29,6 @@ TIMEFORMAT			= xbmc.getRegion('meridiem')
 DATEFORMAT			= xbmc.getRegion('dateshort')
 MAXDAYS				= 6
 
-FORMAT				= 'json'
-DEBUG				= commons.setting('Debug')
-ENABLED				= commons.setting('Enabled')
 
 socket.setdefaulttimeout(10)
 
@@ -45,13 +44,6 @@ def recode(alert): # workaround: wunderground provides a corrupt alerts message
 	except:
 		pass
 	return alert
-
-
-def log(txt):
-	if DEBUG:
-		if isinstance(txt, str):
-			txt = txt.decode("utf-8")
-		commons.debug(txt)
 
 
 def set_property(name, value):
@@ -600,7 +592,7 @@ if sys.argv[1].startswith('Location'):
 	if (keyboard.isConfirmed() and keyboard.getText() != ''):
 		text = keyboard.getText()
 		locations, locationids = location(text)
-		dialog = xbmcgui.Diacommons.debug()
+		dialog = xbmcgui.Dialog()
 		if locations != []:
 			selected = dialog.select(xbmc.getLocalizedString(396), locations)
 			if selected != -1:
@@ -611,7 +603,7 @@ if sys.argv[1].startswith('Location'):
 				commons.debug('Selected location id: %s' % locationids[selected])
 		else:
 			dialog.ok(commons.AddonName(), commons.translate(284))
-elif not ENABLED:
+elif not commons.setting('Enabled'):
 	clear()
 	commons.debug('You need to enable weather retrieval in the weather underground addon settings')
 else:
