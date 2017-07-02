@@ -2,7 +2,7 @@
 <addon id="weather.clue" version="1.0.3" name="Clue Weather" provider-name="AMSD">
 	<requires>
 		<import addon="xbmc.python" version="2.20.0"/>
-		<import addon="service.clue" version="1.0.1"/>
+		<import addon="service.clue" version="1.1.0"/>
 	</requires>
 	<extension point="xbmc.python.weather" library="default.py"/>
 	<extension point="xbmc.addon.metadata">

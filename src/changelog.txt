@@ -1,4 +1,5 @@
 v1.0
+- Use and integrate service.clue API
 - Update language configuration
 - Adapted for Kodi 15 and 16
 - Prepare the source code to use many weather providers

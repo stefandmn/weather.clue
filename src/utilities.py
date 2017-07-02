@@ -3,16 +3,12 @@
 import gzip
 import base64
 import urllib2
+import Commons as commons
 from StringIO import StringIO
-import xbmc
-import xbmcaddon
 
 
-__addon__ = xbmcaddon.Addon()
-__language__ = __addon__.getLocalizedString
 __waik__ = 'MWNmZDVhZjQzNjM4Mjc2Nw=='
 __wunderground_url__ = 'http://api.wunderground.com/api/%s/%s/%s/q/%s.%s'
-
 
 #http://www.wunderground.com/weather/api/d/docs?d=language-support
 LANG = {'afrikaans': 'AF',
@@ -131,55 +127,55 @@ WEATHER_CODES = {'chanceflurries': '41',
 				 'nt_unknown': 'na',
 				 'nt_': 'na'}
 
-MONTH = {1: xbmc.getLocalizedString(51),
-		 2: xbmc.getLocalizedString(52),
-		 3: xbmc.getLocalizedString(53),
-		 4: xbmc.getLocalizedString(54),
-		 5: xbmc.getLocalizedString(55),
-		 6: xbmc.getLocalizedString(56),
-		 7: xbmc.getLocalizedString(57),
-		 8: xbmc.getLocalizedString(58),
-		 9: xbmc.getLocalizedString(59),
-		 10: xbmc.getLocalizedString(60),
-		 11: xbmc.getLocalizedString(61),
-		 12: xbmc.getLocalizedString(62)}
+MONTH = {1: commons.translate(51),
+		 2: commons.translate(52),
+		 3: commons.translate(53),
+		 4: commons.translate(54),
+		 5: commons.translate(55),
+		 6: commons.translate(56),
+		 7: commons.translate(57),
+		 8: commons.translate(58),
+		 9: commons.translate(59),
+		 10: commons.translate(60),
+		 11: commons.translate(61),
+		 12: commons.translate(62)}
 
-WEEKDAY = {0: xbmc.getLocalizedString(41),
-		   1: xbmc.getLocalizedString(42),
-		   2: xbmc.getLocalizedString(43),
-		   3: xbmc.getLocalizedString(44),
-		   4: xbmc.getLocalizedString(45),
-		   5: xbmc.getLocalizedString(46),
-		   6: xbmc.getLocalizedString(47)}
+WEEKDAY = {0: commons.translate(41),
+		   1: commons.translate(42),
+		   2: commons.translate(43),
+		   3: commons.translate(44),
+		   4: commons.translate(45),
+		   5: commons.translate(46),
+		   6: commons.translate(47)}
 
-SEVERITY = {'W': __language__(32510),
-			'A': __language__(32511),
-			'Y': __language__(32512),
-			'S': __language__(32513),
-			'O': __language__(32514),
-			'F': __language__(32515),
-			'N': __language__(32516),
+SEVERITY = {'W': commons.translate(32510),
+			'A': commons.translate(32511),
+			'Y': commons.translate(32512),
+			'S': commons.translate(32513),
+			'O': commons.translate(32514),
+			'F': commons.translate(32515),
+			'N': commons.translate(32516),
 			'L': '', # no idea
 			'': ''}
 
 
 def MOONPHASE(age, percent):
 	if (percent == 0) and (age == 0):
-		phase = __language__(32501)
+		phase = commons.translate(32501)
 	elif (age < 17) and (age > 0) and (percent > 0) and (percent < 50):
-		phase = __language__(32502)
+		phase = commons.translate(32502)
 	elif (age < 17) and (age > 0) and (percent == 50):
-		phase = __language__(32503)
+		phase = commons.translate(32503)
 	elif (age < 17) and (age > 0) and (percent > 50) and (percent < 100):
-		phase = __language__(32504)
+		phase = commons.translate(32504)
 	elif (age > 0) and (percent == 100):
-		phase = __language__(32505)
+		phase = commons.translate(32505)
 	elif (age > 15) and (percent < 100) and (percent > 50):
-		phase = __language__(32506)
+		phase = commons.translate(32506)
 	elif (age > 15) and (percent == 50):
-		phase = __language__(32507)
+		phase = commons.translate(32507)
 	elif (age > 15) and (percent < 50) and (percent > 0):
-		phase = __language__(32508)
+		phase = commons.translate(32508)
 	else:
 		phase = ''
 	return phase

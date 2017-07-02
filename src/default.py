@@ -2,12 +2,13 @@
 
 import os
 import sys
+import time
+import json
 import socket
 import unicodedata
-import time
-import json as simplejson
-from datetime import date
 from utilities import *
+from datetime import date
+import Commons as commons
 
 import xbmc
 import xbmcgui
@@ -15,20 +16,8 @@ import xbmcaddon
 import xbmcvfs
 
 
-__addon__ 		= xbmcaddon.Addon()
-__addonname__ 	= __addon__.getAddonInfo('name')
-__addonid__ 	= __addon__.getAddonInfo('id')
-__cwd__ 		= __addon__.getAddonInfo('path').decode("utf-8")
-__version__ 	= __addon__.getAddonInfo('version')
-__language__ 	= __addon__.getLocalizedString
-
-
 WUNDERGROUND_LOC	= 'http://autocomplete.wunderground.com/aq?query=%s&format=JSON'
 WEATHER_FEATURES	= 'hourly/conditions/forecast10day/astronomy/almanac/alerts/satellite'
-FORMAT 				= 'json'
-ENABLED 			= __addon__.getSetting('Enabled')
-DEBUG 				= __addon__.getSetting('Debug')
-PYTHON				= xbmcaddon.Addon(id='xbmc.python').getAddonInfo('version')
 WEATHER_ICON		= xbmc.translatePath('special://temp/weather/%s.png').decode("utf-8")
 WEATHER_WINDOW		= xbmcgui.Window(12600)
 LANGUAGE			= xbmc.getLanguage().lower()
@@ -37,6 +26,10 @@ TEMPUNIT			= unicode(xbmc.getRegion('tempunit'), encoding='utf-8')
 TIMEFORMAT			= xbmc.getRegion('meridiem')
 DATEFORMAT			= xbmc.getRegion('dateshort')
 MAXDAYS				= 6
+
+FORMAT				= 'json'
+DEBUG				= commons.setting('Debug')
+ENABLED				= commons.setting('Enabled')
 
 socket.setdefaulttimeout(10)
 
@@ -55,11 +48,10 @@ def recode(alert): # workaround: wunderground provides a corrupt alerts message
 
 
 def log(txt):
-	if DEBUG == 'true':
+	if DEBUG:
 		if isinstance(txt, str):
 			txt = txt.decode("utf-8")
-		message = u'%s: %s' % (__addonid__, txt)
-		xbmc.log(msg=message.encode("utf-8"), level=xbmc.LOGDEBUG)
+		commons.debug(txt)
 
 
 def set_property(name, value):
@@ -69,14 +61,14 @@ def set_property(name, value):
 def refresh_locations():
 	locations = 0
 	for count in range(1, 6):
-		loc_name = __addon__.getSetting('Location%s' % count)
+		loc_name = commons.setting('Location%s' % count)
 		if loc_name != '':
 			locations += 1
 		else:
-			__addon__.setSetting('Location%sid' % count, '')
+			xbmcaddon.Addon().setSetting('Location%sid' % count, '')
 		set_property('Location%s' % count, loc_name)
 	set_property('Locations', str(locations))
-	log('Available locations: %s' % str(locations))
+	commons.debug('Available locations: %s' % str(locations))
 
 
 def find_location(loc):
@@ -93,16 +85,16 @@ def find_location(loc):
 def location(string):
 	locs = []
 	locids = []
-	log('Location: %s' % string)
+	commons.debug('Location: %s' % string)
 	loc = unicodedata.normalize('NFKD', unicode(string, 'utf-8')).encode('ascii', 'ignore')
-	log('Searching for location: %s' % loc)
+	commons.debug('Searching for location: %s' % loc)
 	query = find_location(loc)
-	log('Location data: %s' % query)
+	commons.debug('Location data: %s' % query)
 	data = parse_data(query)
-	if data != '' and data.has_key('RESULTS'):
-		for item in data['RESULTS']:
-			location = item['name']
-			locationid = item['l'][3:]
+	if data is not None and data.has_key("RESULTS"):
+		for item in data["RESULTS"]:
+			location = item["name"]
+			locationid = item["l"][3:]
 			locs.append(location)
 			locids.append(locationid)
 	return locs, locids
@@ -117,15 +109,15 @@ def geoip():
 		else:
 			retry += 1
 			xbmc.sleep(10000)
-			log('GeoIP download failed')
-	log('GeoIP data: %s' % query)
+			commons.debug('GeoIP download failed')
+	commons.debug('GeoIP data: %s' % query)
 	data = parse_data(query)
-	if data != '' and data.has_key('location'):
+	if data is not None and data.has_key('location'):
 		location = data['location']['city']
 		locationid = data['location']['l'][3:]
-		__addon__.setSetting('Location1', location)
-		__addon__.setSetting('Location1id', locationid)
-		log('GeoIP location: %s' % location)
+		xbmcaddon.Addon().setSetting('Location1', location)
+		xbmcaddon.Addon().setSetting('Location1id', locationid)
+		commons.debug('GeoIP location: %s' % location)
 	else:
 		location = ''
 		locationid = ''
@@ -138,7 +130,7 @@ def forecast(loc, locid):
 	except:
 		lang = 'EN'
 	opt = 'lang:' + lang
-	log('Weather location: %s' % locid)
+	commons.debug('Weather location: %s' % locid)
 	retry = 0
 	while (retry < 6) and (not xbmc.abortRequested):
 		query = wundergroundapi(WEATHER_FEATURES, opt, locid, FORMAT)
@@ -147,10 +139,10 @@ def forecast(loc, locid):
 		else:
 			retry += 1
 			xbmc.sleep(10000)
-			log('Weather download failed')
-	log('Forecast data: %s' % query)
+			commons.debug('Weather download failed')
+	commons.debug('Forecast data: %s' % query)
 	data = parse_data(query)
-	if data != '' and data.has_key('response') and not data['response'].has_key('error'):
+	if data is not None and data.has_key('response') and not data['response'].has_key('error'):
 		properties(data, loc, locid)
 	else:
 		clear()
@@ -167,7 +159,6 @@ def clear():
 	set_property('Current.DewPoint', '0')
 	set_property('Current.OutlookIcon', 'na.png')
 	set_property('Current.FanartCode', 'na')
-
 	for count in range(0, MAXDAYS + 1):
 		set_property('Day%i.Title' % count, 'N/A')
 		set_property('Day%i.HighTemp' % count, '0')
@@ -177,15 +168,15 @@ def clear():
 		set_property('Day%i.FanartCode' % count, 'na')
 
 
-def parse_data(json):
+def parse_data(content):
 	try:
-		raw = json.replace('<br>', ' ').replace('&auml;', 'ä') # wu api bugs
-		reply = raw.replace('"-999%"', '""').replace('"-9999.00"', '""').replace('"-9998"', '""').replace('"NA"', '""') # wu will change these to null responses in the future
-		data = simplejson.loads(reply)
+		raw = content.replace('<br>', ' ').replace('&auml;', 'ä') # wu api bugs
+		raw = raw.replace('"-999%"', '""').replace('"-9999.00"', '""').replace('"-9998"', '""').replace('"NA"', '""') # wu will change these to null responses in the future
+		output = json.loads(raw)
 	except:
-		log('Failed to parse weather data')
-		data = ''
-	return data
+		commons.debug('Failed to parse weather data')
+		output = None
+	return output
 
 
 def properties(data, loc, locid):
@@ -202,7 +193,6 @@ def properties(data, loc, locid):
 	set_property('Current.DewPoint', str(data['current_observation']['dewpoint_c']))
 	set_property('Current.OutlookIcon', '%s.png' % weathercode) # xbmc translates it to Current.ConditionIcon
 	set_property('Current.FanartCode', weathercode)
-
 	for count, item in enumerate(data['forecast']['simpleforecast']['forecastday']):
 		weathercode = WEATHER_CODES[os.path.splitext(os.path.basename(item['icon_url']))[0]]
 		set_property('Day%i.Title' % count, item['date']['weekday'])
@@ -213,7 +203,6 @@ def properties(data, loc, locid):
 		set_property('Day%i.FanartCode' % count, weathercode)
 		if count == MAXDAYS:
 			break
-
 	# forecast properties
 	set_property('Forecast.IsFetched', 'true')
 	set_property('Forecast.City', data['current_observation']['display_location']['city'])
@@ -221,7 +210,6 @@ def properties(data, loc, locid):
 	set_property('Forecast.Country', data['current_observation']['display_location']['country'])
 	update = time.localtime(float(data['current_observation']['observation_epoch']))
 	local = time.localtime(float(data['current_observation']['local_epoch']))
-
 	if DATEFORMAT[1] == 'd':
 		updatedate = WEEKDAY[update[6]] + ' ' + str(update[2]) + ' ' + MONTH[update[1]] + ' ' + str(update[0])
 		localdate = WEEKDAY[local[6]] + ' ' + str(local[2]) + ' ' + MONTH[local[1]] + ' ' + str(local[0])
@@ -231,7 +219,6 @@ def properties(data, loc, locid):
 	else:
 		updatedate = WEEKDAY[update[6]] + ' ' + str(update[0]) + ' ' + MONTH[update[1]] + ' ' + str(update[2])
 		localdate = WEEKDAY[local[6]] + ' ' + str(local[0]) + ' ' + MONTH[local[1]] + ' ' + str(local[2])
-
 	if TIMEFORMAT != '/':
 		updatetime = time.strftime('%I:%M%p', update)
 		localtime = time.strftime('%I:%M%p', local)
@@ -239,7 +226,6 @@ def properties(data, loc, locid):
 		updatetime = time.strftime('%H:%M', update)
 		localtime = time.strftime('%H:%M', local)
 	set_property('Forecast.Updated', updatedate + ' - ' + updatetime)
-
 	# current properties
 	set_property('Current.IsFetched', 'true')
 	set_property('Current.LocalTime', localtime)
@@ -264,7 +250,6 @@ def properties(data, loc, locid):
 	else:
 		set_property('Current.Visibility', data['current_observation']['visibility_km'] + ' km')
 		set_property('Current.WindGust', str(data['current_observation']['wind_gust_kph']) + ' ' + SPEEDUNIT)
-
 	# today properties
 	set_property('Today.IsFetched', 'true')
 	if TIMEFORMAT != '/':
@@ -314,7 +299,6 @@ def properties(data, loc, locid):
 	except:
 		set_property('Today.RecordHighYear', '')
 		set_property('Today.RecordLowYear', '')
-
 	# daily properties
 	set_property('Daily.IsFetched', 'true')
 	for count, item in enumerate(data['forecast']['simpleforecast']['forecastday']):
@@ -360,12 +344,11 @@ def properties(data, loc, locid):
 			set_property('Daily.%i.Precipitation' % (count + 1), str(item['qpf_day']['mm']) + ' mm')
 			set_property('Daily.%i.Snow' % (count + 1), str(item['snow_day']['cm']) + ' mm')
 		set_property('Daily.%i.ChancePrecipitation' % (count + 1), data['forecast']['txt_forecast']['forecastday'][2 * count]['pop'] + '%')
-
 	# weekend properties
 	set_property('Weekend.IsFetched', 'true')
-	if __addon__.getSetting('Weekend') == '2':
+	if commons.setting('Weekend') == 2:
 		weekend = [4, 5]
-	elif __addon__.getSetting('Weekend') == '1':
+	elif commons.setting('Weekend') == 1:
 		weekend = [5, 6]
 	else:
 		weekend = [6, 7]
@@ -443,7 +426,6 @@ def properties(data, loc, locid):
 			count += 1
 			if count == 2:
 				break
-
 	# 36 hour properties
 	set_property('36Hour.IsFetched', 'true')
 	for count, item in enumerate(data['forecast']['txt_forecast']['forecastday']):
@@ -490,7 +472,6 @@ def properties(data, loc, locid):
 		set_property('36Hour.%i.FanartCode' % (count + 1), weathercode)
 		if count == 2:
 			break
-
 	# hourly properties
 	set_property('Hourly.IsFetched', 'true')
 	for count, item in enumerate(data['hourly_forecast']):
@@ -538,7 +519,6 @@ def properties(data, loc, locid):
 		set_property('Hourly.%i.Outlook' % (count + 1), item['condition'])
 		set_property('Hourly.%i.OutlookIcon' % (count + 1), WEATHER_ICON % weathercode)
 		set_property('Hourly.%i.FanartCode' % (count + 1), weathercode)
-
 	# alert properties
 	set_property('Alerts.IsFetched', 'true')
 	if str(data['alerts']) != '[]':
@@ -561,30 +541,27 @@ def properties(data, loc, locid):
 		set_property('Alerts.RSS', '')
 		set_property('Alerts', '')
 		set_property('Alerts.Count', '0')
-
 	# map properties
 	set_property('Map.IsFetched', 'true')
 	filelist = []
 	locid = base64.b16encode(locid)
-	addondir = os.path.join(__cwd__)
-	mapdir = xbmc.translatePath('special://profile/addon_data/%s/map' % __addonid__)
+	addondir = os.path.join(commons.AddonPath().decode("utf-8"))
+	mapdir = xbmc.translatePath('special://profile/addon_data/%s/map' % commons.AddonId())
 	set_property('MapPath', addondir)
 	if not xbmcvfs.exists(mapdir):
 		xbmcvfs.mkdir(mapdir)
 	dirs, filelist = xbmcvfs.listdir(mapdir)
-	animate = __addon__.getSetting('Animate')
+	animate = commons.setting('Animate')
 	for img in filelist:
-		item = xbmc.translatePath('special://profile/addon_data/%s/map/%s' % (__addonid__, img)).decode("utf-8")
-		if animate == 'true':
+		item = xbmc.translatePath('special://profile/addon_data/%s/map/%s' % (commons.AddonId(), img)).decode("utf-8")
+		if animate:
 			if (time.time() - os.path.getmtime(item) > 14400) or (not locid in item):
 				xbmcvfs.delete(item)
 		else:
 			xbmcvfs.delete(item)
-	zoom = __addon__.getSetting('Zoom')
-	if zoom == '10': # default setting does not return decimals, changed setting will
-		zoom = '10.0'
-	url = data['satellite']['image_url_ir4'].replace('width=300&height=300', 'width=640&height=360').replace('radius=75', 'radius=%i' % int(1000 / int(zoom.rstrip('0').rstrip('.,'))))
-	log('Map url: %s' % url)
+	zoom = commons.setting('Zoom')
+	url = data['satellite']['image_url_ir4'].replace('width=300&height=300', 'width=640&height=360').replace('radius=75', 'radius=%i' % int(1000/zoom))
+	commons.debug('Map url: %s' % url)
 	try:
 		req = urllib2.Request(url)
 		req.add_header('Accept-encoding', 'gzip')
@@ -596,31 +573,26 @@ def properties(data, loc, locid):
 		else:
 			data = response.read()
 		response.close()
-		log('Satellite image downloaded')
+		commons.debug('Satellite image downloaded')
 	except:
 		data = ''
-		log('Satellite image downloaded failed')
+		commons.debug('Satellite image downloaded failed')
 	if data != '':
 		timestamp = time.strftime('%Y%m%d%H%M%S')
-		mapfile = xbmc.translatePath('special://profile/addon_data/%s/map/%s-%s.png' % (__addonid__, locid, timestamp)).decode("utf-8")
+		mapfile = xbmc.translatePath('special://profile/addon_data/%s/map/%s-%s.png' % (commons.AddonId(), locid, timestamp)).decode("utf-8")
 		try:
 			tmpmap = open(mapfile, 'wb')
 			tmpmap.write(data)
 			tmpmap.close()
 			set_property('MapPath', mapdir)
 		except:
-			log('Failed to save satellite image')
+			commons.debug('Failed to save satellite image')
 
 
-log('Version %s started: %s' % (__version__, sys.argv))
-log('Lang: %s' % LANGUAGE)
-log('Speed: %s' % SPEEDUNIT)
-log('Temp: %s' % TEMPUNIT[1])
-log('Time: %s' % TIMEFORMAT)
-log('Date: %s' % DATEFORMAT)
+commons.debug('%s v%s has been started' %(commons.AddonName(), commons.AddonVersion()))
 
-set_property('WeatherProvider', __addonname__)
-set_property('WeatherProviderLogo', xbmc.translatePath(os.path.join(__cwd__, 'icon.png')))
+set_property('WeatherProvider', commons.AddonName())
+set_property('WeatherProviderLogo', xbmc.translatePath(os.path.join(commons.AddonPath().decode("utf-8"), 'icon.png')))
 
 if sys.argv[1].startswith('Location'):
 	keyboard = xbmc.Keyboard('', xbmc.getLocalizedString(14024), False)
@@ -628,38 +600,35 @@ if sys.argv[1].startswith('Location'):
 	if (keyboard.isConfirmed() and keyboard.getText() != ''):
 		text = keyboard.getText()
 		locations, locationids = location(text)
-		dialog = xbmcgui.Dialog()
+		dialog = xbmcgui.Diacommons.debug()
 		if locations != []:
 			selected = dialog.select(xbmc.getLocalizedString(396), locations)
 			if selected != -1:
-				__addon__.setSetting('Enabled', 'true')
-				__addon__.setSetting(sys.argv[1], locations[selected])
-				__addon__.setSetting(sys.argv[1] + 'id', locationids[selected])
-				log('Selected location: %s' % locations[selected])
-				log('Selected location id: %s' % locationids[selected])
+				xbmcaddon.Addon().setSetting('Enabled', 'true')
+				xbmcaddon.Addon().setSetting(sys.argv[1], locations[selected])
+				xbmcaddon.Addon().setSetting(sys.argv[1] + 'id', locationids[selected])
+				commons.debug('Selected location: %s' % locations[selected])
+				commons.debug('Selected location id: %s' % locationids[selected])
 		else:
-			dialog.ok(__addonname__, xbmc.getLocalizedString(284))
-elif ENABLED == 'false':
+			dialog.ok(commons.AddonName(), commons.translate(284))
+elif not ENABLED:
 	clear()
-	log('You need to enable weather retrieval in the weather underground addon settings')
-elif PYTHON == '1.0' or PYTHON == '2.0' or PYTHON == '2.0.0':
-	clear()
-	log('Older versions of MCPi/Kodi are not supported by the weather underground add-on')
+	commons.debug('You need to enable weather retrieval in the weather underground addon settings')
 else:
-	location = __addon__.getSetting('Location%s' % sys.argv[1])
-	locationid = __addon__.getSetting('Location%sid' % sys.argv[1])
+	location = commons.setting('Location%s' % sys.argv[1])
+	locationid = commons.setting('Location%sid' % sys.argv[1])
 	if (locationid == '') and (sys.argv[1] != '1'):
-		location = __addon__.getSetting('Location1')
-		locationid = __addon__.getSetting('Location1id')
-		log('Trying location 1 instead')
+		location = commons.setting('Location1')
+		locationid = commons.setting('Location1id')
+		commons.debug('Trying location 1 instead')
 	if locationid == '':
-		log('Fallback to GeoIP')
+		commons.debug('Fallback to GeoIP')
 		location, locationid = geoip()
 	if not locationid == '':
 		forecast(location, locationid)
 	else:
-		log('No location found')
+		commons.debug('No location found')
 		clear()
 	refresh_locations()
 
-log('Finished')
+commons.debug('%s v%s has been terminated' %(commons.AddonName(), commons.AddonVersion()))
