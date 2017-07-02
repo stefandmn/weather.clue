@@ -1,0 +1,12 @@
+v1.0
+- Update language configuration
+- Adapted for Kodi 15 and 16
+- Prepare the source code to use many weather providers
+- Apply changes for Kodi compatibility
+- Addon icon has been changed (rebranding)
+- Remove SimpleJSON library dependency and adapted it to use service.clue libraries
+- Redesign icon control to figure out the affiliation of this add-on to Clue family
+- Adapt and optimize original add-on resources and scripts
+- Create a new Underground license key (for development purpose) and use it in all weather interrogations
+- Restructure localization (English, German, French and Romanian)
+- Create a derived weather add-on based on weather.underground v3.0.9
