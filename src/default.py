@@ -11,10 +11,25 @@ from utilities import *
 from datetime import date
 import Commons as commons
 
-import xbmc
-import xbmcgui
-import xbmcaddon
-import xbmcvfs
+if hasattr(sys.modules["__main__"], "xbmc"):
+	xbmc = sys.modules["__main__"].xbmc
+else:
+	import xbmc
+
+if hasattr(sys.modules["__main__"], "xbmcgui"):
+	xbmcgui = sys.modules["__main__"].xbmcgui
+else:
+	import xbmcgui
+
+if hasattr(sys.modules["__main__"], "xbmcaddon"):
+	xbmcaddon = sys.modules["__main__"].xbmcaddon
+else:
+	import xbmcaddon
+
+if hasattr(sys.modules["__main__"], "xbmcvfs"):
+	xbmcvfs = sys.modules["__main__"].xbmcvfs
+else:
+	import xbmcvfs
 
 
 FORMAT				= 'json'
