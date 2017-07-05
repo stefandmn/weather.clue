@@ -62,7 +62,7 @@ msgid "Location 3 id"
 msgstr ""
 
 msgctxt "#32120"
-msgid "Wunderground API key"
+msgid "Provider API key"
 msgstr ""
 
 msgctxt "#32121"
@@ -173,4 +173,12 @@ msgstr ""
 
 msgctxt "#32516"
 msgid "Synopsis"
+msgstr ""
+
+msgctxt "#32517"
+msgid "Data Provider"
+msgstr ""
+
+msgctxt "#32521"
+msgid "wunderground"
 msgstr ""

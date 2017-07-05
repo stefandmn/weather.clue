@@ -1,4 +1,6 @@
 v1.0
+- Update settings to make provider license key configurable
+- Restructure the code and defines data providers
 - Use and integrate service.clue API
 - Update language configuration
 - Adapted for Kodi 15 and 16

@@ -153,7 +153,6 @@ SEVERITY = {'W': commons.translate(32510),
 			'L': '', # no idea
 			'': ''}
 
-
 def MOONPHASE(age, percent):
 	if (percent == 0) and (age == 0):
 		phase = commons.translate(32501)
@@ -206,21 +205,3 @@ def KPHTOBFT(spd):
 	else:
 		bft = ''
 	return bft
-
-
-def wundergroundapi(features, settings, query, fmt):
-	url = 'http://api.wunderground.com/api/%s/%s/%s/q/%s.%s' % (commons.setting("License")[::-1], features, settings, query, fmt)
-	try:
-		req = urllib2.Request(url)
-		req.add_header('Accept-encoding', 'gzip')
-		response = urllib2.urlopen(req)
-		if response.info().get('Content-Encoding') == 'gzip':
-			buf = StringIO(response.read())
-			compr = gzip.GzipFile(fileobj=buf)
-			data = compr.read()
-		else:
-			data = response.read()
-		response.close()
-	except:
-		data = ''
-	return data

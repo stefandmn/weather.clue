@@ -2,4 +2,4 @@
 
 **Clue Weather** package is designed to become main weather plugin for MCPi and an alternative
 weather add-on for Kodi. The default content provider is Wunderground and might be plugged other
-sources using plugin data structure.
+sources using plugin object model.
