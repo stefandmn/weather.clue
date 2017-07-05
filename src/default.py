@@ -65,19 +65,13 @@ class ClueWeather:
 		commons.debug('%s v%s has been terminated' %(commons.AddonName(), commons.AddonVersion()))
 
 	def getProvider(self, code='default'):
-		commons.debug("TEST 00 - %s" %code)
 		if not self.PROVIDERS:
-			commons.debug("TEST 01")
 			for cls in DataProvider.__subclasses__():
-				commons.debug("TEST 01.1, name = %s, module = %s " %(str(cls.__name__), str(cls.__module__)))
 				provider = cls()
 				self.PROVIDERS[provider.code()] = provider
-				commons.debug("TEST 01.2 = %s " %str(provider.code()))
 		if code is None or code == '' or code == 'default':
-			commons.debug("TEST 02")
 			return self.PROVIDERS.itervalues().next()
 		else:
-			commons.debug("TEST 03")
 			if self.PROVIDERS.has_key(code):
 				return self.PROVIDERS[code]
 			else:
