@@ -108,6 +108,7 @@ class Wunderground(DataProvider):
 		opt = 'lang:' + lang
 		commons.debug('Weather location: %s' % locid)
 		retry = 0
+		query = ''
 		while (retry < 6) and (not xbmc.abortRequested):
 			query = self.call(self.WEATHER_FEATURES, opt, locid, self.FORMAT)
 			if query != '':
@@ -116,7 +117,7 @@ class Wunderground(DataProvider):
 				retry += 1
 				xbmc.sleep(10000)
 				commons.debug('Weather download failed')
-		commons.debug('Forecast data: %s' % query)
+		commons.trace('Forecast data: %s' % query)
 		data = self._parse(query)
 		if data is not None and data.has_key('response') and not data['response'].has_key('error'):
 			self.properties(data, loc, locid)
