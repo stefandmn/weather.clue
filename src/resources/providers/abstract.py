@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import sys
 import abc
 import Commons as commons
