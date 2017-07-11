@@ -24,7 +24,6 @@ class DataProvider(object):
 	__metaclass__ = abc.ABCMeta
 	NODAYS = 6
 	FORMAT = 'json'
-	WINDOW = xbmcgui.Window(12600)
 	ICON = xbmc.translatePath('special://temp/weather/%s.png').decode("utf-8")
 	LANG = xbmc.getLanguage().lower()
 	USPEED = xbmc.getRegion('speedunit')
@@ -54,7 +53,7 @@ class DataProvider(object):
 	def property(self, name, value=None):
 		if value is None:
 			value = ''
-		self.WINDOW.setProperty(name, value)
+		xbmcgui.Window(12600).setProperty(name, value)
 
 	def refresh(self ):
 		locations = 0

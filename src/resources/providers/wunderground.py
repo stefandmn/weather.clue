@@ -79,6 +79,7 @@ class Wunderground(DataProvider):
 
 	def geoip(self):
 		retry = 0
+		query = ''
 		while (retry < 6) and (not xbmc.abortRequested):
 			query = self.call('geolookup', 'lang:EN', 'autoip', self.FORMAT)
 			if query != '':
