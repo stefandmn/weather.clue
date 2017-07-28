@@ -2,13 +2,16 @@
 
 import os
 import sys
+import gzip
 import time
 import json
 import base64
 import socket
+import urllib2
 import unicodedata
 from utilities import *
 from datetime import date
+from StringIO import StringIO
 import Commons as commons
 from abstract import DataProvider
 
@@ -95,7 +98,7 @@ class Wunderground(DataProvider):
 			locationid = data['location']['l'][3:]
 			xbmcaddon.Addon().setSetting('Location1', location)
 			xbmcaddon.Addon().setSetting('Location1id', locationid)
-			commons.debug('GeoIP location: %s' % location)
+			commons.debug('Detected GeoIP location: %s' % location)
 		else:
 			location = ''
 			locationid = ''

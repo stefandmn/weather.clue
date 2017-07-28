@@ -23,49 +23,15 @@ class ClueWeather:
 		commons.debug('%s v%s has been started' %(commons.AddonName(), commons.AddonVersion()))
 		self.provider = self.getProvider(commons.getSetting('Provider'))
 		if self.provider is None:
-			commons.error("No weather data provider detected")
+			commons.error("No weather data provider found")
 		else:
-			commons.debug('Selected data provider: %s' %str(self.provider))
+			commons.debug('Selected weather data provider: %s' %str(self.provider))
 			self.provider.property('WeatherProvider', commons.AddonName() + " @ " + str(self.provider.code()).capitalize())
 			self.provider.property('WeatherProviderLogo', xbmc.translatePath(os.path.join(commons.AddonPath().decode("utf-8"), 'icon.png')))
-			# evaluate input argument and depends on run add-on event/action
-			if sys.argv[1].startswith('Location'):
-				keyboard = xbmc.Keyboard('', xbmc.getLocalizedString(14024), False)
-				keyboard.doModal()
-				if keyboard.isConfirmed() and keyboard.getText() != '':
-					text = keyboard.getText()
-					locations, locationids = self.provider.location(text)
-					dialog = xbmcgui.Dialog()
-					if locations != []:
-						selected = dialog.select(xbmc.getLocalizedString(396), locations)
-						if selected != -1:
-							commons.setSetting('Enabled', 'true')
-							commons.setSetting(sys.argv[1], locations[selected])
-							commons.debug('Selected location: %s' % locations[selected])
-							commons.setSetting(sys.argv[1] + 'id', locationids[selected])
-							commons.debug('Selected location id: %s' % locationids[selected])
-					else:
-						dialog.ok(commons.AddonName(), commons.translate(284))
-			elif commons.setting('Enabled'):
-				location = commons.setting('Location%s' % sys.argv[1])
-				locationid = commons.setting('Location%sid' % sys.argv[1])
-				if (locationid == '') and (sys.argv[1] != '1'):
-					location = commons.setting('Location1')
-					locationid = commons.setting('Location1id')
-					commons.debug('Trying location 1 instead')
-				if locationid == '':
-					commons.debug('Fallback to GeoIP')
-					location, locationid = self.provider.geoip()
-				if not locationid == '':
-					self.provider.forecast(location, locationid)
-				else:
-					commons.debug('No location found')
-					self.provider.clear()
-				self.provider.refresh()
-			else:
-				commons.debug('You need to enable weather retrieval in the weather underground add-on settings')
-				self.provider.clear()
+
+	def __del__(self):
 		commons.debug('%s v%s has been terminated' %(commons.AddonName(), commons.AddonVersion()))
+		del self
 
 	def getProvider(self, code='default'):
 		if not self.PROVIDERS:
@@ -84,8 +50,49 @@ class ClueWeather:
 			else:
 				return None
 
+	def execute(self, data=''):
+		# evaluate input argument and depends on run add-on event/action
+		if data.startswith('Location'):
+			keyboard = xbmc.Keyboard('', xbmc.getLocalizedString(14024), False)
+			keyboard.doModal()
+			if keyboard.isConfirmed() and keyboard.getText() != '':
+				text = keyboard.getText()
+				locationNames, locationIds = self.provider.location(text)
+				dialog = xbmcgui.Dialog()
+				if locationNames != []:
+					selected = dialog.select(xbmc.getLocalizedString(396), locationNames)
+					if selected != -1:
+						commons.setSetting('Enabled', 'true')
+						commons.setSetting(data, locationNames[selected])
+						commons.debug('Selected location: %s' % locationNames[selected])
+						commons.setSetting(data + 'id', locationIds[selected])
+						commons.debug('Selected location id: %s' % locationIds[selected])
+				else:
+					dialog.ok(commons.AddonName(), commons.translate(284))
+		elif commons.setting('Enabled'):
+			location = commons.setting('Location%s' % data)
+			locationid = commons.setting('Location%sid' % data)
+			if (locationid == '') and (data != '1'):
+				location = commons.setting('Location1')
+				locationid = commons.setting('Location1id')
+				commons.debug('Trying first location instead: %s (%s)' % (location, locationid))
+			if locationid == '':
+				commons.debug('Fallback to GeoIP')
+				location, locationid = self.provider.geoip()
+			if not locationid == '':
+				commons.debug('Call forecast for location %s (%s)' % (location, locationid))
+				self.provider.forecast(location, locationid)
+			else:
+				commons.debug('No location found')
+				self.provider.clear()
+			self.provider.refresh()
+		else:
+			commons.debug('You need to enable weather retrieval in the weather underground add-on settings')
+			self.provider.clear()
+
 
 if (__name__ == "__main__"):
 	weather = ClueWeather()
+	weather.execute(sys.argv[1])
 	del weather
 	del xbmcgui

@@ -2,6 +2,7 @@
 
 import Commons as commons
 
+
 #http://www.wunderground.com/weather/api/d/docs?d=language-support
 LANG = {'afrikaans': 'AF',
 		'albanian': 'AL',
