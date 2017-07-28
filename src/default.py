@@ -86,4 +86,6 @@ class ClueWeather:
 
 
 if (__name__ == "__main__"):
-	ClueWeather()
+	weather = ClueWeather()
+	del weather
+	del xbmcgui
