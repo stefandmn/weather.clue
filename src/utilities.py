@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import gzip
-import urllib2
 import Commons as commons
-from StringIO import StringIO
 
 #http://www.wunderground.com/weather/api/d/docs?d=language-support
 LANG = {'afrikaans': 'AF',
