@@ -91,7 +91,7 @@ class ClueWeather:
 			self.provider.clear()
 
 
-if (__name__ == "__main__"):
+if __name__ == "__main__":
 	weather = ClueWeather()
 	weather.execute(sys.argv[1])
 	del weather
