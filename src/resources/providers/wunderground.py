@@ -203,7 +203,7 @@ class Wunderground(DataProvider):
 			self.property('Current.HeatIndex', str(data['current_observation']['heat_index_c']) + self.UTMPRT)
 			self.property('Current.WindChill', str(data['current_observation']['windchill_c']) + self.UTMPRT)
 
-		if  self.USPEED == 'mph':
+		if self.USPEED == 'mph':
 			self.property('Current.Visibility', data['current_observation']['visibility_mi'] + ' mi')
 			self.property('Current.WindGust', str(data['current_observation']['wind_gust_mph']) + ' ' +  self.USPEED)
 		else:
@@ -273,10 +273,10 @@ class Wunderground(DataProvider):
 			self.property('Daily.%i.Outlook' % (count + 1), item['conditions'])
 			self.property('Daily.%i.OutlookIcon' % (count + 1), self.ICON % weathercode)
 			self.property('Daily.%i.FanartCode' % (count + 1), weathercode)
-			if  self.USPEED == 'mph':
+			if self.USPEED == 'mph':
 				self.property('Daily.%i.WindSpeed' % (count + 1), str(item['avewind']['mph']) + ' ' +  self.USPEED)
 				self.property('Daily.%i.MaxWind' % (count + 1), str(item['maxwind']['mph']) + ' ' +  self.USPEED)
-			elif  self.USPEED == 'Beaufort':
+			elif self.USPEED == 'Beaufort':
 				self.property('Daily.%i.WindSpeed' % (count + 1), KPHTOBFT(item['avewind']['kph']))
 				self.property('Daily.%i.MaxWind' % (count + 1), KPHTOBFT(item['maxwind']['kph']))
 			else:

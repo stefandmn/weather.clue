@@ -1,3 +1,6 @@
+v1.1
+- Adapted for Kodi 17/MCPi 1.1
+
 v1.0
 - Update settings to make provider license key configurable
 - Restructure the code and defines data providers
@@ -11,5 +14,5 @@ v1.0
 - Redesign icon control to figure out the affiliation of this add-on to Clue family
 - Adapt and optimize original add-on resources and scripts
 - Create a new Underground license key (for development purpose) and use it in all weather interrogations
-- Restructure localization (English, German, French and Romanian)
+- Restructure localization (English only)
 - Create a derived weather add-on based on weather.underground v3.0.9
