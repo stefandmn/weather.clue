@@ -4,7 +4,7 @@
 MCPi and an alternative weather add-on for Kodi. The package comes with 
 two content providers the default one being **OpenWeatherMap** and the 
 secondary one is **Dark Sky**. Additionally, can be developed and plugged 
-other sources using built-in plugin object model (see `DataProvider` class
+other sources using built-in plugin object model (see `ContentProvider` class
 definition).
 
 Below are described the main skin properties published by the content provides

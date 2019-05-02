@@ -17,7 +17,7 @@ else:
 
 class OpenWeatherMap(ContentProvider):
 	LOCATION = 'https://api.openweathermap.org/data/2.5/find?q=%s&type=like&sort=population&cnt=10&appid=%s'
-	FORECAST = 'http://api.openweathermap.org/data/2.5/%s?id=%s&appid=%s&units=%s&lang=%s'
+	FORECAST = 'https://api.openweathermap.org/data/2.5/%s?id=%s&appid=%s&units=%s&lang=%s'
 	ART_DATA = {"01d": "Clear/Day",
 				"01n": "Clear/Night",
 				"02d": "Cloudy/Partly/Day",
@@ -52,7 +52,7 @@ class OpenWeatherMap(ContentProvider):
 
 
 	def validate(self):
-		_url = "https://api.openweathermap.org/data/2.5/weather?id=%s" %self.apikey
+		_url = "https://api.openweathermap.org/data/2.5/weather?id=2172797&appid=%s" %self.apikey
 		try:
 			req = urllib2.urlopen(_url)
 			req.close()

@@ -91,8 +91,6 @@ class ClueWeather:
 				# trigger provider validation
 				commons.debug("Asking for provider validation")
 				commons.setAddonSetting("Validate", "true")
-				# trigger normalization
-				commons.setSkinProperty(12600, 'WeatherProvider')
 			else:
 				commons.debug("Provider configuration was cancelled")
 		elif str(config) == "ProviderKey":
@@ -127,43 +125,8 @@ class ClueWeather:
 					commons.debug('Selected location: (%s - %s)' %(locnames[selindex], locids[selindex]))
 			else:
 				commons.OkDialog(284)
-			# trigger normalization
-			commons.setSkinProperty(12600, 'WeatherProvider')
 		else:
 			commons.debug("Location configuration was cancelled")
-
-
-	def PublishProvider(self):
-		commons.debug("Publishing provider through initialization")
-		provider = self.getProviderByCode(commons.getAddonSetting('Provider'))
-		if provider is not None:
-			provider.skinproperty('WeatherProvider', provider.name())
-			if os.path.isfile(commons.path('resources', 'media', provider.code() + '.png')):
-				provider.skinproperty('WeatherProviderLogo', commons.path('resources', 'media', provider.code() + '.png'))
-			else:
-				provider.skinproperty('WeatherProviderLogo', commons.path('icon.png'))
-			commons.debug("Active provider: %s" % provider)
-
-
-	def NormalizeLocations(self,):
-		commons.debug("Normalizing locations through initialization")
-		count = 0
-		found = False
-		for index in range(1, 6):
-			locname = commons.setting('Location%iAction' %index)
-			locid = commons.setting('Location%i' % index)
-			if not found and (locname != '' and locid != ''):
-				count += 1
-			elif not found and (locname == '' or locid == ''):
-				found = True
-			if found:
-				commons.setSkinProperty(12600, 'Location%i' % index)
-				commons.setAddonSetting('Location%iAction' % index)
-				commons.setAddonSetting('Location%i' % index)
-			else:
-				commons.setSkinProperty(12600, 'Location%i' % index, locname)
-		commons.setSkinProperty(12600, 'Locations', str(count))
-		commons.debug("Active locations: %s" % str(count))
 
 
 	def settings(self, config):
@@ -175,30 +138,48 @@ class ClueWeather:
 
 	def run(self, index):
 		""" Runs package for content discovery and processing"""
+		# check if forecast workflow is enabled
 		if not commons.setting('Enabled'):
 			return
+		# check provider configuration
 		provider = self.getProviderByCode(commons.getAddonSetting('Provider'))
-		commons.debug("Found provider for running: %s" %provider)
+		commons.debug("Found provider to run forecast workflow: %s" %provider)
 		if provider is None:
 			commons.NotificationMsg(32202, 15000)
 			return
 		if provider is not None and (commons.setting('APIKey') == '' or commons.setting('APIKey') is None):
 			commons.NotificationMsg(32123, 15000)
 			return
+		# validate provider configuration
 		if commons.any2bool(commons.getAddonSetting("Validate")):
-			commons.debug("Validating configured content provider")
 			try:
 				provider.validate()
 				commons.setAddonSetting("Validate", "false")
-				commons.debug("Content provider is validated, running weather forecast workflow")
-			except BaseException as be:
-				commons.debug("Content provider is invalid, reset forecast skin properties: %s" %str(be))
+				commons.debug("Content provider is valid, running weather forecast workflow")
+			except:
+				commons.debug("Content provider is invalid, reset forecast skin properties")
 				commons.NotificationMsg(32203, 20000)
 				provider.clear()
 				return
-		if commons.isempty(commons.getSkinProperty(12600, 'WeatherProvider')):
-			self.NormalizeLocations()
-			self.PublishProvider()
+		# normalize locations
+		count = 0
+		found = False
+		for id in range(1, 6):
+			locname = commons.setting('Location%iAction' %id)
+			locid = commons.setting('Location%i' % id)
+			if not found and (locname != '' and locid != ''):
+				count += 1
+			elif not found and (locname == '' or locid == ''):
+				found = True
+			if found:
+				commons.setSkinProperty(12600, 'Location%i' %id)
+				commons.setAddonSetting('Location%iAction' %id)
+				commons.setAddonSetting('Location%i' %id)
+			else:
+				commons.setSkinProperty(12600, 'Location%i' %id, locname)
+		commons.setSkinProperty(12600, 'Locations', str(count))
+		commons.debug("Active locations: %s" % str(count))
+		# identify the right location
 		if index is None:
 			commons.debug('Run GeoIP location discovery due to missing configuration')
 			locname, locid = provider.geoip()
@@ -213,9 +194,18 @@ class ClueWeather:
 		if locid == '':
 			commons.debug('Run GeoIP location discovery due to wrong configuration')
 			locname, locid = provider.geoip()
+		# run forecast workflow
 		if locname != '':
+			# reset skin properties when the location is changed
 			if locid != provider.skininfo("Current.Location"):
 				provider.clear()
+			# publish provider details
+			provider.skinproperty('WeatherProvider', provider.name())
+			if os.path.isfile(commons.path('resources', 'media', provider.code() + '.png')):
+				provider.skinproperty('WeatherProviderLogo', commons.path('resources', 'media', provider.code() + '.png'))
+			else:
+				provider.skinproperty('WeatherProviderLogo', commons.path('icon.png'))
+			# call provider forecast
 			commons.debug('Call forecast for location %s (%s)' % (locname, locid))
 			provider.forecast(locname, locid)
 		else:
