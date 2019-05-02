@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from abstract import DataProvider
-from wunderground import Wunderground
+from abstract import ContentProvider
+from openweathermap import OpenWeatherMap
+from darksky import DarkSky
 
-__all__ = ['DataProvider', 'Wunderground']
+__all__ = ['ContentProvider', 'OpenWeatherMap', 'DarkSky']

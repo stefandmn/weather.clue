@@ -1,4 +1,9 @@
-v1.1
+v1.4
+- Adapt addon configuration and the logic behind
+- Implementation of DarkSky new provider
+- Drop wunderground provider (including related resources)
+- Adapt configuration to support multiple providers
+- Implement OpenWeatherMap provider and make it default
 - Adapted for Kodi 17/MCPi 1.1
 
 v1.0
