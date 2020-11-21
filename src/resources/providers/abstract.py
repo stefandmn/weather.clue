@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import os
 import sys
 import abc
 import gzip
 import json
 import time
 import math
-import base64
-import commons
+import common
 from io import StringIO
 from urllib import request as urllib2
 
@@ -130,11 +128,11 @@ class ContentProvider(object):
 
 	@property
 	def apikey(self):
-		return commons.setting("APIKey")
+		return common.setting("APIKey")
 
 
 	def _find(self, url):
-		commons.debug("Calling URL: %s" % url, self.code())
+		common.debug("Calling URL: %s" % url, self.code())
 		try:
 			req = urllib2.urlopen(url)
 			response = req.read()
@@ -149,7 +147,7 @@ class ContentProvider(object):
 		data = None
 		while data is None and retry < 6 and not xbmc.abortRequested:
 			try:
-				commons.debug("Calling URL: %s" % url, self.code())
+				common.debug("Calling URL: %s" % url, self.code())
 				req = urllib2.Request(url)
 				req.add_header('Accept-encoding', 'gzip')
 				response = urllib2.urlopen(req)
@@ -168,13 +166,13 @@ class ContentProvider(object):
 
 	def _parse(self, content):
 		if content is not None:
-			commons.debug("Parsing content: %s" % content)
+			common.debug("Parsing content: %s" % content)
 			try:
 				raw = content.replace('<br>', ' ')
 				raw = raw.replace('"NA"', '""')
 				output = json.loads(raw)
 			except BaseException as be:
-				commons.debug('Failed to parse weather data: %s' %be)
+				common.debug('Failed to parse weather data: %s' %be)
 				output = None
 			return output
 		else:
@@ -201,7 +199,7 @@ class ContentProvider(object):
 
 
 	def clear(self):
-		commons.debug('Clear all data')
+		common.debug('Clear all data')
 		self.skinproperty('WeatherProvider')
 		self.skinproperty('WeatherProviderLogo')
 		self.skinproperty('Current.IsFetched')

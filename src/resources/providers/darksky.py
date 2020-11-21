@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import gzip
 import socket
-import commons
+import common
 import unicodedata
 from urllib import request as urllib2
 from .abstract import ContentProvider
@@ -77,9 +76,9 @@ class DarkSky(ContentProvider):
 			code = data["city"]
 			if data.has_key("country"):
 				code += "," + data["country"]
-				commons.debug('Identifying GeoIP location: %s' % code, self.code())
+				common.debug('Identifying GeoIP location: %s' % code, self.code())
 				data = self._find(code)
-				commons.debug('Found location data: %s' % data, self.code())
+				common.debug('Found location data: %s' % data, self.code())
 				if data is not None and data.has_key("latitude"):
 					self.coordinates(data["latitude"], data["longitude"])
 					location = code.replace(",", "-")
@@ -91,9 +90,9 @@ class DarkSky(ContentProvider):
 		locs = []
 		locids = []
 		loc = unicodedata.normalize('NFKD', str(string)).encode('ascii', 'ignore')
-		commons.debug('Searching for location: %s' % loc, self.code())
+		common.debug('Searching for location: %s' % loc, self.code())
 		data = self._find(loc)
-		commons.debug('Found location data: %s' % data, self.code())
+		common.debug('Found location data: %s' % data, self.code())
 		if data is not None and data.has_key("latitude"):
 			self.coordinates(data["latitude"], data["longitude"])
 			location = string.replace(",", "-")
@@ -104,7 +103,7 @@ class DarkSky(ContentProvider):
 
 
 	def forecast(self, loc, locid):
-		commons.debug('Weather forecast for location: %s' % locid, self.code())
+		common.debug('Weather forecast for location: %s' % locid, self.code())
 		data = self._call(locid)
 		# Current weather forecast
 		if data is not None and data.has_key('currently'):

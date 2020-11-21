@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import gzip
 import socket
-import commons
+import common
 import unicodedata
-from io import StringIO
 from urllib import request as urllib2
 from .abstract import ContentProvider
 
@@ -83,9 +81,9 @@ class OpenWeatherMap(ContentProvider):
 			code = data["city"]
 			if data.has_key("countryCode"):
 				code += "," + data["countryCode"]
-				commons.debug('Identifying GeoIP location: %s' % code, self.code())
+				common.debug('Identifying GeoIP location: %s' % code, self.code())
 				data = self._find(code)
-				commons.debug('Found location data: %s' % data, self.code())
+				common.debug('Found location data: %s' % data, self.code())
 				if data is not None and data.has_key("list"):
 					item = data["list"][0]
 					location = item["name"]
@@ -99,9 +97,9 @@ class OpenWeatherMap(ContentProvider):
 		locs = []
 		locids = []
 		loc = unicodedata.normalize('NFKD', str(string)).encode('ascii', 'ignore')
-		commons.debug('Searching for location: %s' % loc, self.code())
+		common.debug('Searching for location: %s' % loc, self.code())
 		data = self._find(loc)
-		commons.debug('Found location data: %s' % data, self.code())
+		common.debug('Found location data: %s' % data, self.code())
 		if data is not None and data.has_key("list"):
 			for item in data["list"]:
 				location = item["name"]
@@ -114,7 +112,7 @@ class OpenWeatherMap(ContentProvider):
 
 
 	def forecast(self, loc, locid):
-		commons.debug('Weather forecast for location: %s' % locid, self.code())
+		common.debug('Weather forecast for location: %s' % locid, self.code())
 		# Current weather forecast
 		data = self._call('weather', locid)
 		if data is not None and data.has_key('weather') and data.has_key("cod") and data["cod"] == 200:

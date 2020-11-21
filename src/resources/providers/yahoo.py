@@ -3,7 +3,7 @@
 import sys
 import time
 import socket
-import commons
+import common
 import unicodedata
 from datetime import datetime
 from urllib import request as urllib2
@@ -67,9 +67,9 @@ class Yahoo(ContentProvider):
 				code += "," + data["regionName"]
 				if data.has_key("country"):
 					code += "," + data["country"]
-				commons.debug('Identifying GeoIP location: %s' % code, self.code())
+				common.debug('Identifying GeoIP location: %s' % code, self.code())
 				data = self._find(code)
-				commons.debug('Found location data: %s' % data, self.code())
+				common.debug('Found location data: %s' % data, self.code())
 				if data is not None and data.has_key("woeid"):
 					self.coordinates(data["lat"], data["lon"])
 					locationid = data["woeid"]
@@ -84,9 +84,9 @@ class Yahoo(ContentProvider):
 		locs = []
 		locids = []
 		loc = unicodedata.normalize('NFKD', str(string)).encode('ascii', 'ignore')
-		commons.debug('Searching for location: %s' % loc, self.code())
+		common.debug('Searching for location: %s' % loc, self.code())
 		data = self._find(loc)
-		commons.debug('Found location data: %s' % data, self.code())
+		common.debug('Found location data: %s' % data, self.code())
 		if data is not None and isinstance(data, list):
 			for item in data:
 				locationid = item["woeid"]
@@ -101,7 +101,7 @@ class Yahoo(ContentProvider):
 
 
 	def forecast(self, loc, locid):
-		commons.debug('Weather forecast for location: %s' % locid, self.code())
+		common.debug('Weather forecast for location: %s' % locid, self.code())
 		# Current weather forecast
 		data = self._call(locid)
 		if data is not None and data.has_key('weather') and data.has_key("cod") and data["cod"] == 200:

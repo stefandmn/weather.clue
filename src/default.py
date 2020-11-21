@@ -2,7 +2,7 @@
 
 import os
 import sys
-import commons
+import common
 from resources.providers import ContentProvider
 
 
@@ -11,11 +11,11 @@ class ClueWeather:
 	PROVIDERS = {}
 
 	def __init__(self):
-		commons.debug('%s v%s has been started' %(commons.AddonName(), commons.AddonVersion()))
+		common.debug('%s v%s has been started' %(common.AddonName(), common.AddonVersion()))
 
 
 	def __del__(self):
-		commons.debug('%s v%s has been terminated' %(commons.AddonName(), commons.AddonVersion()))
+		common.debug('%s v%s has been terminated' %(common.AddonName(), common.AddonVersion()))
 		del self
 
 
@@ -28,9 +28,9 @@ class ClueWeather:
 				if not self.PROVIDERS.has_key(provider.code()):
 					self.PROVIDERS[provider.code()] = provider
 				else:
-					commons.error("Invalid signature of content provider, it has the same name or id with another one: %s " %provider)
+					common.error("Invalid signature of content provider, it has the same name or id with another one: %s " %provider)
 			except BaseException as be:
-				commons.error('Unexpected error while reading [%s] content provider: %s' %(str(cls),str(be)))
+				common.error('Unexpected error while reading [%s] content provider: %s' %(str(cls),str(be)))
 
 
 	def getProviderByCode(self, code):
@@ -68,65 +68,65 @@ class ClueWeather:
 	def setProvider(self, config):
 		"""Runs configuration flow to setup or to change the provider"""
 		if str(config) == "ProviderCode":
-			commons.debug("Setting new provider")
+			common.debug("Setting new provider")
 			options = self.getProviderNames()
-			index = commons.SelectDialog(32201, options)
+			index = common.SelectDialog(32201, options)
 			if index >= 0:
 				provider = self.getProviderByName(options[index])
-				commons.setAddonSetting("Enabled", "true")
+				common.setAddonSetting("Enabled", "true")
 				if provider is not None:
 					provider.clear()
-					commons.setAddonSetting("Provider", provider.code())
-					commons.setAddonSetting("ProviderAction", provider.name())
+					common.setAddonSetting("Provider", provider.code())
+					common.setAddonSetting("ProviderAction", provider.name())
 				else:
-					commons.setAddonSetting("Provider")
-					commons.setAddonSetting("ProviderAction")
+					common.setAddonSetting("Provider")
+					common.setAddonSetting("ProviderAction")
 				# reset dependent settings
-				commons.setAddonSetting("APIKey")
-				commons.setAddonSetting("APIKeyAction")
+				common.setAddonSetting("APIKey")
+				common.setAddonSetting("APIKeyAction")
 				for index in range(1,6):
-					commons.setAddonSetting("Location%iAction" % index)
-					commons.setAddonSetting("Location%i" % index)
-					commons.debug('Reset location %i' %index)
+					common.setAddonSetting("Location%iAction" % index)
+					common.setAddonSetting("Location%i" % index)
+					common.debug('Reset location %i' %index)
 				# trigger provider validation
-				commons.debug("Asking for provider validation")
-				commons.setAddonSetting("Validate", "true")
+				common.debug("Asking for provider validation")
+				common.setAddonSetting("Validate", "true")
 			else:
-				commons.debug("Provider configuration was cancelled")
+				common.debug("Provider configuration was cancelled")
 		elif str(config) == "ProviderKey":
-			commons.debug("Setting new provider API key")
-			inputval = commons.StringInputDialog(32122, commons.getAddonSetting("APIKey"))
+			common.debug("Setting new provider API key")
+			inputval = common.StringInputDialog(32122, common.getAddonSetting("APIKey"))
 			if inputval is not None and inputval != '':
-				commons.setAddonSetting("APIKey", inputval)
-				commons.setAddonSetting("APIKeyAction", "".rjust(len(inputval), "*"))
+				common.setAddonSetting("APIKey", inputval)
+				common.setAddonSetting("APIKeyAction", "".rjust(len(inputval), "*"))
 				# trigger provider validation
-				commons.debug("Asking for provider validation")
-				commons.setAddonSetting("Validate", "true")
+				common.debug("Asking for provider validation")
+				common.setAddonSetting("Validate", "true")
 			else:
-				commons.debug("Provider API key configuration was cancelled")
+				common.debug("Provider API key configuration was cancelled")
 		else:
-			commons.debug("Unknown provider configuration option: %s" %config)
+			common.debug("Unknown provider configuration option: %s" %config)
 
 
 	def setLocation(self, config):
 		"""Runs configuration flow to setup new location"""
-		commons.debug("Setting new location (%s)" %config)
-		provider = self.getProviderByCode(commons.getAddonSetting('Provider'))
+		common.debug("Setting new location (%s)" %config)
+		provider = self.getProviderByCode(common.getAddonSetting('Provider'))
 		if provider is None:
 			raise RuntimeError("No content provider selected for configuration")
-		inputval = commons.StringInputDialog(14024, commons.getAddonSetting(config + "Action"))
+		inputval = common.StringInputDialog(14024, common.getAddonSetting(config + "Action"))
 		if inputval is not None and inputval != '':
 			locnames, locids = provider.location(inputval)
 			if locnames:
-				selindex = commons.SelectDialog(396, locnames)
+				selindex = common.SelectDialog(396, locnames)
 				if selindex >= 0:
-					commons.setAddonSetting(config + "Action", locnames[selindex])
-					commons.setAddonSetting(config, locids[selindex])
-					commons.debug('Selected location: (%s - %s)' %(locnames[selindex], locids[selindex]))
+					common.setAddonSetting(config + "Action", locnames[selindex])
+					common.setAddonSetting(config, locids[selindex])
+					common.debug('Selected location: (%s - %s)' %(locnames[selindex], locids[selindex]))
 			else:
-				commons.OkDialog(284)
+				common.OkDialog(284)
 		else:
-			commons.debug("Location configuration was cancelled")
+			common.debug("Location configuration was cancelled")
 
 
 	def settings(self, config):
@@ -139,60 +139,60 @@ class ClueWeather:
 	def run(self, index):
 		""" Runs package for content discovery and processing"""
 		# check if forecast workflow is enabled
-		if not commons.setting('Enabled'):
+		if not common.setting('Enabled'):
 			return
 		# check provider configuration
-		provider = self.getProviderByCode(commons.getAddonSetting('Provider'))
-		commons.debug("Found provider to run forecast workflow: %s" %provider)
+		provider = self.getProviderByCode(common.getAddonSetting('Provider'))
+		common.debug("Found provider to run forecast workflow: %s" %provider)
 		if provider is None:
-			commons.NotificationMsg(32202, 15000)
+			common.NotificationMsg(32202, 15000)
 			return
-		if provider is not None and (commons.setting('APIKey') == '' or commons.setting('APIKey') is None):
-			commons.NotificationMsg(32123, 15000)
+		if provider is not None and (common.setting('APIKey') == '' or common.setting('APIKey') is None):
+			common.NotificationMsg(32123, 15000)
 			return
 		# validate provider configuration
-		if commons.any2bool(commons.getAddonSetting("Validate")):
+		if common.any2bool(common.getAddonSetting("Validate")):
 			try:
 				provider.validate()
-				commons.setAddonSetting("Validate", "false")
-				commons.debug("Content provider is valid, running weather forecast workflow")
+				common.setAddonSetting("Validate", "false")
+				common.debug("Content provider is valid, running weather forecast workflow")
 			except:
-				commons.debug("Content provider is invalid, reset forecast skin properties")
-				commons.NotificationMsg(32203, 20000)
+				common.debug("Content provider is invalid, reset forecast skin properties")
+				common.NotificationMsg(32203, 20000)
 				provider.clear()
 				return
 		# normalize locations
 		count = 0
 		found = False
 		for id in range(1, 6):
-			locname = commons.setting('Location%iAction' %id)
-			locid = commons.setting('Location%i' % id)
+			locname = common.setting('Location%iAction' %id)
+			locid = common.setting('Location%i' % id)
 			if not found and (locname != '' and locid != ''):
 				count += 1
 			elif not found and (locname == '' or locid == ''):
 				found = True
 			if found:
-				commons.setSkinProperty(12600, 'Location%i' %id)
-				commons.setAddonSetting('Location%iAction' %id)
-				commons.setAddonSetting('Location%i' %id)
+				common.setSkinProperty(12600, 'Location%i' %id)
+				common.setAddonSetting('Location%iAction' %id)
+				common.setAddonSetting('Location%i' %id)
 			else:
-				commons.setSkinProperty(12600, 'Location%i' %id, locname)
-		commons.setSkinProperty(12600, 'Locations', str(count))
-		commons.debug("Active locations: %s" % str(count))
+				common.setSkinProperty(12600, 'Location%i' %id, locname)
+		common.setSkinProperty(12600, 'Locations', str(count))
+		common.debug("Active locations: %s" % str(count))
 		# identify the right location
 		if index is None:
-			commons.debug('Run GeoIP location discovery due to missing configuration')
+			common.debug('Run GeoIP location discovery due to missing configuration')
 			locname, locid = provider.geoip()
 		else:
-			commons.debug("Using location index: %s" %str(index))
-			locname = commons.setting('Location%sAction' % str(index))
-			locid = commons.setting('Location%s' % str(index))
-		if locid == '' and commons.any2int(index) > 1:
-			commons.debug('Trying first location instead, due to invalid index defined in previous configuration')
-			locname = commons.setting('Location1Action')
-			locid = commons.setting('Location1')
+			common.debug("Using location index: %s" %str(index))
+			locname = common.setting('Location%sAction' % str(index))
+			locid = common.setting('Location%s' % str(index))
+		if locid == '' and common.any2int(index) > 1:
+			common.debug('Trying first location instead, due to invalid index defined in previous configuration')
+			locname = common.setting('Location1Action')
+			locid = common.setting('Location1')
 		if locid == '':
-			commons.debug('Run GeoIP location discovery due to wrong configuration')
+			common.debug('Run GeoIP location discovery due to wrong configuration')
 			locname, locid = provider.geoip()
 		# run forecast workflow
 		if locname != '':
@@ -201,15 +201,15 @@ class ClueWeather:
 				provider.clear()
 			# publish provider details
 			provider.skinproperty('WeatherProvider', provider.name())
-			if os.path.isfile(commons.path('resources', 'media', provider.code() + '.png')):
-				provider.skinproperty('WeatherProviderLogo', commons.path('resources', 'media', provider.code() + '.png'))
+			if os.path.isfile(common.path('resources', 'media', provider.code() + '.png')):
+				provider.skinproperty('WeatherProviderLogo', common.path('resources', 'media', provider.code() + '.png'))
 			else:
-				provider.skinproperty('WeatherProviderLogo', commons.path('icon.png'))
+				provider.skinproperty('WeatherProviderLogo', common.path('icon.png'))
 			# call provider forecast
-			commons.debug('Call forecast for location %s (%s)' % (locname, locid))
+			common.debug('Call forecast for location %s (%s)' % (locname, locid))
 			provider.forecast(locname, locid)
 		else:
-			commons.warn('No location found or configured')
+			common.warn('No location found or configured')
 			provider.clear()
 
 
