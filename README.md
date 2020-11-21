@@ -61,12 +61,12 @@ their units.
 
 #### Day [0-6]
 
-Day%i.Title
-Day%i.HighTemp
-Day%i.LowTemp
-Day%i.Outlook
-Day%i.OutlookIcon
-Day%i.FanartCode
+* Day%i.Title
+* Day%i.HighTemp
+* Day%i.LowTemp
+* Day%i.Outlook
+* Day%i.OutlookIcon
+* Day%i.FanartCode
 
 * Daily.%i.IsFetched
 * Daily.%i.Title
