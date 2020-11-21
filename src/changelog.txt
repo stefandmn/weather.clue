@@ -1,3 +1,7 @@
+v2.0
+- Implementation of Yahoo provider
+- Migrate addon to Python3
+
 v1.4
 - Adapt addon configuration and the logic behind
 - Implementation of DarkSky new provider

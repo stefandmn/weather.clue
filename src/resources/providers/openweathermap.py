@@ -4,10 +4,10 @@ import sys
 import gzip
 import socket
 import commons
-import urllib2
 import unicodedata
-from StringIO import StringIO
-from abstract import ContentProvider
+from io import StringIO
+from urllib import request as urllib2
+from .abstract import ContentProvider
 
 if hasattr(sys.modules["__main__"], "xbmc"):
 	xbmc = sys.modules["__main__"].xbmc
@@ -43,6 +43,21 @@ class OpenWeatherMap(ContentProvider):
 		socket.setdefaulttimeout(10)
 
 
+	def _find(self, loc):
+		url = self.LOCATION % (urllib2.quote(loc))
+		return super(ContentProvider, self)._find(url)
+
+
+	def _call(self, feature, id):
+		url = self.FORECAST % (feature, id, self.apikey, "metric", self.lang)
+		return self._call(url)
+
+
+	def _fanart(self, code):
+		"""Detect and return fanart code"""
+		return self.ART_BASE[self.ART_DATA[code]]
+
+
 	def name(self):
 		return "OpenWeatherMap"
 
@@ -57,37 +72,7 @@ class OpenWeatherMap(ContentProvider):
 			req = urllib2.urlopen(_url)
 			req.close()
 		except:
-			raise StandardError("Invalid provider configuration")
-
-
-	def _find(self, loc):
-		url = self.LOCATION %(urllib2.quote(loc), self.apikey)
-		commons.debug("Calling URL: %s" % url, self.code())
-		try:
-			req = urllib2.urlopen(url)
-			response = req.read()
-			req.close()
-		except:
-			response = ''
-		return self._parse(response)
-
-
-	def location(self, string):
-		locs = []
-		locids = []
-		loc = unicodedata.normalize('NFKD', unicode(string, 'utf-8')).encode('ascii', 'ignore')
-		commons.debug('Searching for location: %s' % loc, self.code())
-		data = self._find(loc)
-		commons.debug('Found location data: %s' % data, self.code())
-		if data is not None and data.has_key("list"):
-			for item in data["list"]:
-				location = item["name"]
-				if item.has_key("sys") and item["sys"].has_key("country"):
-					location += "-" + item["sys"]["country"]
-				locationid = item["id"]
-				locs.append(location)
-				locids.append(str(locationid))
-		return locs, locids
+			raise RuntimeError("Invalid provider configuration")
 
 
 	def geoip(self):
@@ -110,11 +95,30 @@ class OpenWeatherMap(ContentProvider):
 		return location, str(locationid)
 
 
+	def location(self, string):
+		locs = []
+		locids = []
+		loc = unicodedata.normalize('NFKD', str(string)).encode('ascii', 'ignore')
+		commons.debug('Searching for location: %s' % loc, self.code())
+		data = self._find(loc)
+		commons.debug('Found location data: %s' % data, self.code())
+		if data is not None and data.has_key("list"):
+			for item in data["list"]:
+				location = item["name"]
+				if item.has_key("sys") and item["sys"].has_key("country"):
+					location += "-" + item["sys"]["country"]
+				locationid = item["id"]
+				locs.append(location)
+				locids.append(str(locationid))
+		return locs, locids
+
+
 	def forecast(self, loc, locid):
 		commons.debug('Weather forecast for location: %s' % locid, self.code())
 		# Current weather forecast
-		data = self.call('weather', locid)
+		data = self._call('weather', locid)
 		if data is not None and data.has_key('weather') and data.has_key("cod") and data["cod"] == 200:
+			# current - standard
 			self.skinproperty('Current.IsFetched', 'true')
 			self.skinproperty('Current.Location', loc)
 			self.skinproperty('Current.Latitude', data['coord']['lat'])
@@ -127,18 +131,24 @@ class OpenWeatherMap(ContentProvider):
 			self.skinproperty('Current.Pressure', data['main']['pressure'], "hPa")
 			self.skinproperty('Current.OutlookIcon', '%s.png' % self._fanart(data['weather'][0]["icon"]))
 			self.skinproperty('Current.FanartCode', self._fanart(data['weather'][0]["icon"]))
-			#self.skinproperty('Current.Visibility', self._2km(self._2km(data['visibility']), self.UM_DSTNC), self.UM_DSTNC)
+			self.skinproperty('Current.Visibility', self._2km(self._2km(data['visibility']), self.UM_DSTNC), self.UM_DSTNC)
 			self.skinproperty('Current.LocalTime', self._2shtime(data['dt']))
 			self.skinproperty('Current.LocalDate', self._2shdate(data['dt']))
 			self.skinproperty('Current.FeelsLike', self.feelslike(self._2c(data['main']['temp']), self._2kph(data['wind']['speed']), data['main']['humidity']))
-			self.skinproperty('Today.IsFetched', 'true')
+			# Forecast - extended
+			self.skinproperty('Forecast.City', loc)
+			self.skinproperty('Forecast.Country', data['sys']['country'])
+			self.skinproperty('Forecast.Latitude', data['coord']['lat'])
+			self.skinproperty('Forecast.Longitude', data['coord']['lon'])
+			self.skinproperty('Forecast.Updated', self._2shdatetime(data['dt']))
 			# Today forecast
+			self.skinproperty('Today.IsFetched', 'true')
 			self.skinproperty('Today.Sunrise', self._2shtime(data['sys']['sunrise']))
 			self.skinproperty('Today.Sunset', self._2shtime(data['sys']['sunset']))
 			self.skinproperty('Today.HighTemperature', self._2c(data['main']['temp_max']), self.UM_TEMPR)
 			self.skinproperty('Today.LowTemperature', self._2c(data['main']['temp_min']), self.UM_TEMPR)
 			# Hourly weather forecast
-			data = self.call('forecast', locid)
+			data = self._call('forecast', locid)
 			if data['list'] is not None and len(data['list']) >= 1:
 				count = 0
 				self.skinproperty('Hourly.IsFetched', 'true')
@@ -160,31 +170,3 @@ class OpenWeatherMap(ContentProvider):
 			# Daily weather forecast
 			self.skinproperty('Daily.IsFetched')
 			self.skinproperty('Alerts.IsFetched')
-
-
-	def call(self, feature, id):
-		retry = 0
-		data = None
-		url = self.FORECAST % (feature, id, self.apikey, "metric", self.lang)
-		while data is None and retry < 6 and not xbmc.abortRequested:
-			try:
-				commons.debug("Calling URL: %s" %url, self.code())
-				req = urllib2.Request(url)
-				req.add_header('Accept-encoding', 'gzip')
-				response = urllib2.urlopen(req)
-				if response.info().get('Content-Encoding') == 'gzip':
-					buf = StringIO(response.read())
-					compr = gzip.GzipFile(fileobj=buf)
-					data = compr.read()
-				else:
-					data = response.read()
-				response.close()
-			except:
-				data = None
-				retry += 1
-		return self._parse(data)
-
-
-	def _fanart(self, code):
-		"""Detect and return fanart code"""
-		return self.ART_BASE[self.ART_DATA[code]]

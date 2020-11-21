@@ -113,7 +113,7 @@ class ClueWeather:
 		commons.debug("Setting new location (%s)" %config)
 		provider = self.getProviderByCode(commons.getAddonSetting('Provider'))
 		if provider is None:
-			raise StandardError("No content provider selected for configuration")
+			raise RuntimeError("No content provider selected for configuration")
 		inputval = commons.StringInputDialog(14024, commons.getAddonSetting(config + "Action"))
 		if inputval is not None and inputval != '':
 			locnames, locids = provider.location(inputval)

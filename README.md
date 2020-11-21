@@ -1,18 +1,25 @@
-# Clue Weather for MCPi and/or Kodi
+# Clue Weather for Kodi
 
 **Clue Weather** package is designed to become main weather plugin for 
-MCPi and an alternative weather add-on for Kodi. The package comes with 
-two content providers the default one being **OpenWeatherMap** and the 
-secondary one is **Dark Sky**. Additionally, can be developed and plugged 
+_Kodi_ within **Clue** system or an alternative weather add-on for any _Kodi_ 
+instance. The package comes with three content providers the default one being 
+**Yahoo**, alternatively might be used **OpenWeatherMap** and the last one is
+**Dark Sky** weather provider. Additionally, can be developed and plugged 
 other sources using built-in plugin object model (see `ContentProvider` class
 definition).
 
-Below are described the main skin properties published by the content provides
-through their lifecycle. 
+Development, testing and deployment activities are driven by CCM process (Clue 
+Configuration Management), built over GNU `make` utility. To see all make rules
+try `make help`.
+
+_Enjoy!_
+
 
 ## Details for Skinners or Plugin Developers
 
-All values returned by the addon will include their units.
+Below are described the main skin properties published by the content provides
+through the addon execution flow. All values returned by the addon will include 
+their units.
 
 
 ### Weather Labels
@@ -38,6 +45,12 @@ All values returned by the addon will include their units.
 * Current.OutlookIcon
 * Current.Visibility
 
+* Forecast.City
+* Forecast.Country
+* Forecast.Latitude
+* Forecast.Longitude
+* Forecast.Updated
+
 #### Today
 
 * Today.IsFetched
@@ -48,21 +61,28 @@ All values returned by the addon will include their units.
 
 #### Day [0-6]
 
-* Day.%i.IsFetched
-* Day.%i.Title
-* Day.%i.HighTemp
-* Day.%i.LowTemp
-* Day.%i.Outlook
-* Day.%i.OutlookIcon
-* Day.%i.FanartCode
-* Day.%i.WindSpeed
-* Day.%i.WindDirection
-* Day.%i.Humidity
-* Day.%i.DewPoint
-* Day.%i.UVIndex
-* Day.%i.Visibility
-* Day.%i.HighTemperature
-* Day.%i.LowTemperature
+Day%i.Title
+Day%i.HighTemp
+Day%i.LowTemp
+Day%i.Outlook
+Day%i.OutlookIcon
+Day%i.FanartCode
+
+* Daily.%i.IsFetched
+* Daily.%i.Title
+* Daily.%i.HighTemp
+* Daily.%i.LowTemp
+* Daily.%i.Outlook
+* Daily.%i.OutlookIcon
+* Daily.%i.FanartCode
+* Daily.%i.WindSpeed
+* Daily.%i.WindDirection
+* Daily.%i.Humidity
+* Daily.%i.DewPoint
+* Daily.%i.UVIndex
+* Daily.%i.Visibility
+* Daily.%i.HighTemperature
+* Daily.%i.LowTemperature
 
 
 #### Hourly[0-16] 

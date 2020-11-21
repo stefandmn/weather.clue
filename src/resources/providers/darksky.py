@@ -4,10 +4,9 @@ import sys
 import gzip
 import socket
 import commons
-import urllib2
 import unicodedata
-from StringIO import StringIO
-from abstract import ContentProvider
+from urllib import request as urllib2
+from .abstract import ContentProvider
 
 if hasattr(sys.modules["__main__"], "xbmc"):
 	xbmc = sys.modules["__main__"].xbmc
@@ -38,6 +37,21 @@ class DarkSky(ContentProvider):
 		socket.setdefaulttimeout(10)
 
 
+	def _find(self, loc):
+		url = self.LOCATION % (urllib2.quote(loc))
+		return super(ContentProvider, self)._find(url)
+
+
+	def _call(self, id):
+		url = self.FORECAST % (self.apikey, id, self.lang, "si")
+		return super(ContentProvider, self)._call(url)
+
+
+	def _fanart(self, code):
+		"""Detect and return fanart code"""
+		return self.ART_BASE[self.ART_DATA[code]]
+
+
 	def name(self):
 		return "Dark Sky"
 
@@ -52,35 +66,7 @@ class DarkSky(ContentProvider):
 			req = urllib2.urlopen(_url)
 			req.close()
 		except:
-			raise StandardError("Invalid provider configuration")
-
-
-	def _find(self, loc):
-		url = self.LOCATION %(urllib2.quote(loc))
-		commons.debug("Calling URL: %s" % url, self.code())
-		try:
-			req = urllib2.urlopen(url)
-			response = req.read()
-			req.close()
-		except:
-			response = ''
-		return self._parse(response)
-
-
-	def location(self, string):
-		locs = []
-		locids = []
-		loc = unicodedata.normalize('NFKD', unicode(string, 'utf-8')).encode('ascii', 'ignore')
-		commons.debug('Searching for location: %s' % loc, self.code())
-		data = self._find(loc)
-		commons.debug('Found location data: %s' % data, self.code())
-		if data is not None and data.has_key("latitude"):
-			self.coordinates(data["latitude"], data["longitude"])
-			location = string.replace(",", "-")
-			locationid = str(self.latitude) + "," + str(self.longitude)
-			locs.append(location)
-			locids.append(str(locationid))
-		return locs, locids
+			raise RuntimeError("Invalid provider configuration")
 
 
 	def geoip(self):
@@ -101,16 +87,33 @@ class DarkSky(ContentProvider):
 		return location, str(locationid)
 
 
+	def location(self, string):
+		locs = []
+		locids = []
+		loc = unicodedata.normalize('NFKD', str(string)).encode('ascii', 'ignore')
+		commons.debug('Searching for location: %s' % loc, self.code())
+		data = self._find(loc)
+		commons.debug('Found location data: %s' % data, self.code())
+		if data is not None and data.has_key("latitude"):
+			self.coordinates(data["latitude"], data["longitude"])
+			location = string.replace(",", "-")
+			locationid = str(self.latitude) + "," + str(self.longitude)
+			locs.append(location)
+			locids.append(str(locationid))
+		return locs, locids
+
+
 	def forecast(self, loc, locid):
 		commons.debug('Weather forecast for location: %s' % locid, self.code())
-		data = self.call(locid)
+		data = self._call(locid)
 		# Current weather forecast
 		if data is not None and data.has_key('currently'):
 			item = data['currently']
+			# Current - standard
 			self.skinproperty('Current.IsFetched', 'true')
+			self.skinproperty('Current.Location', loc)
 			self.skinproperty('Current.Latitude', data['latitude'])
 			self.skinproperty('Current.Longitude', data['longitude'])
-			self.skinproperty('Current.Location', loc)
 			self.skinproperty('Current.Condition', item["summary"].capitalize())
 			self.skinproperty('Current.Temperature', self._2c(item['temperature']))
 			self.skinproperty('Current.Wind', self._2kph(item['windSpeed']))
@@ -125,6 +128,12 @@ class DarkSky(ContentProvider):
 			self.skinproperty('Current.Visibility', self._2km(self._2km(item['visibility'], 'km'), self.UM_DSTNC), self.UM_DSTNC)
 			self.skinproperty('Current.DewPoint', item['dewPoint'])
 			self.skinproperty('Current.UVIndex', item['uvIndex'])
+			# Forecast - extended
+			self.skinproperty('Forecast.City', loc)
+			self.skinproperty('Forecast.Country', '')
+			self.skinproperty('Forecast.Latitude', data['latitude'])
+			self.skinproperty('Forecast.Longitude', data['longitude'])
+			self.skinproperty('Forecast.Updated', self._2shdatetime(item['time']))
 		# Today forecast
 		if data is not None and data.has_key('daily') and data['daily'].has_key('data') and len(data['daily']['data']) > 0:
 			item = data['daily']['data'][0]
@@ -140,19 +149,30 @@ class DarkSky(ContentProvider):
 			self.skinproperty('Daily.IsFetched', 'true')
 			for item in data['daily']['data']:
 				if index >= 1:
-					self.skinproperty('Day.%i.Title' % count, self._2shday(item['time']))
-					self.skinproperty('Day.%i.Condition' % count, item["summary"].capitalize())
-					self.skinproperty('Day.%i.Outlook' % count, item["summary"].capitalize())
-					self.skinproperty('Day.%i.OutlookIcon' % count, '%s.png' % self._fanart(item["icon"]))
-					self.skinproperty('Day.%i.FanartCode' % count, self._fanart(item["icon"]))
-					self.skinproperty('Day.%i.Wind' % count, self._2wind(item['windSpeed']))
-					self.skinproperty('Day.%i.WindDirection' % count, item['windBearing'], '°') if item.has_key('windBearing') else self.skinproperty('Day.%i.WindDirection' % count)
-					self.skinproperty('Day.%i.Humidity' % count, 100*item['humidity'])
-					self.skinproperty('Day.%i.Pressure' % count, item['pressure'], "hPa")
-					self.skinproperty('Day.%i.DewPoint' % count, item['dewPoint'])
-					self.skinproperty('Day.%i.UVIndex' % count, item['uvIndex'])
-					self.skinproperty('Day.%i.HighTemp' % count, self._2temp(int(item['temperatureHigh'])), self.UM_TEMPR)
-					self.skinproperty('Day.%i.LowTemp' % count, self._2temp(int(item['temperatureLow'])), self.UM_TEMPR)
+					# Standard
+					self.skinproperty('Day%i.Title' % count, self._2lnday(item['time']))
+					self.skinproperty('Day%i.HighTemp' % count, self._2temp(int(item['temperatureHigh'])), self.UM_TEMPR)
+					self.skinproperty('Day%i.LowTemp' % count, self._2temp(int(item['temperatureLow'])), self.UM_TEMPR)
+					self.skinproperty('Day%i.Outlook' % count, item["summary"].capitalize())
+					self.skinproperty('Day%i.OutlookIcon' % count, '%s.png' % self._fanart(item["icon"]))
+					self.skinproperty('Day%i.FanartCode' % count, self._fanart(item["icon"]))
+					# Extended
+					self.skinproperty('Daily.%i.ShortDay' % count, self._2shday(item['time']))
+					self.skinproperty('Daily.%i.LongDay' % count, self._2lnday(item['time']))
+					self.skinproperty('Daily.%i.ShortDate' % count, self._2shday(item['time']))
+					self.skinproperty('Daily.%i.LongDate' % count, self._2lnday(item['time']))
+					self.skinproperty('Daily.%i.Outlook' % count, item["summary"].capitalize())
+					self.skinproperty('Daily.%i.OutlookIcon' % count, '%s.png' % self._fanart(item["icon"]))
+					self.skinproperty('Daily.%i.FanartCode' % count, self._fanart(item["icon"]))
+					self.skinproperty('Daily.%i.Condition' % count, item["summary"].capitalize())
+					self.skinproperty('Daily.%i.Wind' % count, self._2wind(item['windSpeed']))
+					self.skinproperty('Daily.%i.WindDirection' % count, item['windBearing'], '°') if item.has_key('windBearing') else self.skinproperty('Day.%i.WindDirection' % count)
+					self.skinproperty('Daily.%i.Humidity' % count, 100*item['humidity'])
+					self.skinproperty('Daily.%i.Pressure' % count, item['pressure'], "hPa")
+					self.skinproperty('Daily.%i.DewPoint' % count, item['dewPoint'])
+					self.skinproperty('Daily.%i.UVIndex' % count, item['uvIndex'])
+					self.skinproperty('Daily.%i.HighTemperature' % count, self._2temp(int(item['temperatureHigh'])), self.UM_TEMPR)
+					self.skinproperty('Daily.%i.LowTemperature' % count, self._2temp(int(item['temperatureLow'])), self.UM_TEMPR)
 					count += 1
 				index += 1
 		# Hourly weather forecast
@@ -190,31 +210,3 @@ class DarkSky(ContentProvider):
 				text += "[B]" + title + "[/B] - " + description + " (" + expire + ")"
 				count += 1
 			self.skinproperty('Alerts.Text', text)
-
-
-	def call(self, id):
-		retry = 0
-		data = None
-		url = self.FORECAST % (self.apikey, id, self.lang, "si")
-		while data is None and retry < 6 and not xbmc.abortRequested:
-			try:
-				commons.debug("Calling URL: %s" %url, self.code())
-				req = urllib2.Request(url)
-				req.add_header('Accept-encoding', 'gzip')
-				response = urllib2.urlopen(req)
-				if response.info().get('Content-Encoding') == 'gzip':
-					buf = StringIO(response.read())
-					compr = gzip.GzipFile(fileobj=buf)
-					data = compr.read()
-				else:
-					data = response.read()
-				response.close()
-			except:
-				data = None
-				retry += 1
-		return self._parse(data)
-
-
-	def _fanart(self, code):
-		"""Detect and return fanart code"""
-		return self.ART_BASE[self.ART_DATA[code]]

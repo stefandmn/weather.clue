@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="weather.clue" version="1.4.7" name="Clue Weather" provider-name="AMSD">
+<addon id="weather.clue" version="2.0.1" name="Clue Weather" provider-name="AMSD">
 	<requires>
-		<import addon="xbmc.python" version="2.20.0"/>
-		<import addon="module.clue" version="1.4.1"/>
+		<import addon="xbmc.python" version="2.25.0"/>
+		<import addon="module.clue" version="2.0.0"/>
 	</requires>
 	<extension point="xbmc.python.weather" library="default.py"/>
 	<extension point="xbmc.addon.metadata">
-		<summary lang="en">Clue Weather for MCPi</summary>
-		<description lang="en">Weather service for Clue MCPi or Kodi, providing weather forecast content from various providers</description>
+		<summary lang="en">Clue Weather for Kodi</summary>
+		<description lang="en">Weather service for Clue and Kodi, providing weather forecast content from Yahoo, OpenWeatherMap and Dark Sky weather providers</description>
 	</extension>
 </addon>

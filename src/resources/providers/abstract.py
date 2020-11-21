@@ -3,11 +3,14 @@
 import os
 import sys
 import abc
+import gzip
 import json
 import time
+import math
 import base64
 import commons
-import urllib2
+from io import StringIO
+from urllib import request as urllib2
 
 if hasattr(sys.modules["__main__"], "xbmc"):
 	xbmc = sys.modules["__main__"].xbmc
@@ -33,6 +36,8 @@ else:
 
 class ContentProvider(object):
 	__metaclass__ = abc.ABCMeta
+	LOCATION = ''
+	FORECAST = ''
 	LANGUAGE = xbmc.getLanguage().lower()
 	UM_SPEED = xbmc.getRegion('speedunit')
 	UM_TEMPR = xbmc.getRegion('tempunit')
@@ -97,6 +102,7 @@ class ContentProvider(object):
 	def name(self):
 		pass
 
+
 	@abc.abstractmethod
 	def code(self):
 		pass
@@ -125,6 +131,39 @@ class ContentProvider(object):
 	@property
 	def apikey(self):
 		return commons.setting("APIKey")
+
+
+	def _find(self, url):
+		commons.debug("Calling URL: %s" % url, self.code())
+		try:
+			req = urllib2.urlopen(url)
+			response = req.read()
+			req.close()
+		except:
+			response = ''
+		return self._parse(response)
+
+
+	def _call(self, url):
+		retry = 0
+		data = None
+		while data is None and retry < 6 and not xbmc.abortRequested:
+			try:
+				commons.debug("Calling URL: %s" % url, self.code())
+				req = urllib2.Request(url)
+				req.add_header('Accept-encoding', 'gzip')
+				response = urllib2.urlopen(req)
+				if response.info().get('Content-Encoding') == 'gzip':
+					buf = StringIO(response.read())
+					compr = gzip.GzipFile(fileobj=buf)
+					data = compr.read()
+				else:
+					data = response.read()
+				response.close()
+			except:
+				data = None
+				retry += 1
+		return self._parse(data)
 
 
 	def _parse(self, content):
@@ -188,17 +227,28 @@ class ContentProvider(object):
 		self.skinproperty('Today.LowTemperature')
 		self.skinproperty('Daily.IsFetched')
 		for index in range(0, 6):
-			self.skinproperty('Day.%i.Title' % index)
-			self.skinproperty('Day.%i.HighTemp' % index)
-			self.skinproperty('Day.%i.LowTemp' % index)
-			self.skinproperty('Day.%i.Outlook' % index)
-			self.skinproperty('Day.%i.OutlookIcon' % index)
-			self.skinproperty('Day.%i.FanartCode' % index)
-			self.skinproperty('Day.%i.Pressure' % index)
-			self.skinproperty('Day.%i.Humidity' % index)
-			self.skinproperty('Day.%i.UVIndex' % index)
-			self.skinproperty('Day.%i.DewPoint' % index)
-			self.skinproperty('Day.%i.Visibility' % index)
+			# Standard
+			self.skinproperty('Day%i.Title' % index)
+			self.skinproperty('Day%i.HighTemp' % index)
+			self.skinproperty('Day%i.LowTemp' % index)
+			self.skinproperty('Day%i.Outlook' % index)
+			self.skinproperty('Day%i.OutlookIcon' % index)
+			self.skinproperty('Day%i.FanartCode' % index)
+			# Extended
+			self.skinproperty('Daily.%i.ShortDay' % index)
+			self.skinproperty('Daily.%i.LongDay' % index)
+			self.skinproperty('Daily.%i.ShortDate' % index)
+			self.skinproperty('Daily.%i.LongDate' % index)
+			self.skinproperty('Daily.%i.Outlook' % index)
+			self.skinproperty('Daily.%i.OutlookIcon' % index)
+			self.skinproperty('Daily.%i.FanartCode' % index)
+			self.skinproperty('Daily.%i.Pressure' % index)
+			self.skinproperty('Daily.%i.Humidity' % index)
+			self.skinproperty('Daily.%i.UVIndex' % index)
+			self.skinproperty('Daily.%i.DewPoint' % index)
+			self.skinproperty('Daily.%i.Visibility' % index)
+			self.skinproperty('Daily.%i.HighTemperature' % index)
+			self.skinproperty('Daily.%i.LowTemperature' % index)
 		self.skinproperty('Hourly.IsFetched')
 		for index in range(0, 16):
 			self.skinproperty('Hourly.%i.Time' % index)
@@ -265,7 +315,26 @@ class ContentProvider(object):
 
 
 	def _2shday(self, value):
-		return time.strftime('%A', time.localtime(value))
+		return time.strftime('%a', time.localtime(value))
+
+
+	def _2lnday(self, value):
+		if not isinstance(value, int):
+			value = time.strftime('%w', time.localtime(value))
+		if value == 0:
+			return xbmc.getLocalizedString(17)
+		elif value == 1:
+			return xbmc.getLocalizedString(11)
+		elif value == 2:
+			return xbmc.getLocalizedString(12)
+		elif value == 3:
+			return xbmc.getLocalizedString(13)
+		elif value == 4:
+			return xbmc.getLocalizedString(14)
+		elif value == 5:
+			return xbmc.getLocalizedString(15)
+		elif value == 6:
+			return xbmc.getLocalizedString(16)
 
 
 	def _2shtime(self, value):
@@ -276,8 +345,38 @@ class ContentProvider(object):
 		return time.strftime('%d %b', time.localtime(value))
 
 
+	def _2lndate(self, value):
+		return time.strftime('%d %B %Y', time.localtime(value))
+
+
 	def _2shdatetime(self, value):
 		return time.strftime('%d %b %H:%M', time.localtime(value))
+
+	def _dewpoint(Tc=0, RH=93, minRH=(0, 0.075)[0]):
+		""" Dewpoint from relative humidity and temperature
+			If you know the relative humidity and the air temperature,
+			and want to calculate the dewpoint, the formulas are as follows.
+
+			getDewPoint( tCelsius, humidity )
+		"""
+		# First, if your air temperature is in degrees Fahrenheit, then you must convert it to degrees Celsius by using the Fahrenheit to Celsius formula.
+		# Tc = 5.0 / 9.0 * ( Tf - 32.0 )
+		# The next step is to obtain the saturation vapor pressure(Es) using this formula as before when air temperature is known.
+		Es = 6.11 * 10.0 ** (7.5 * Tc / (237.7 + Tc))
+		# The next step is to use the saturation vapor pressure and the relative humidity to compute the actual vapor pressure(E) of the air. This can be done with the following formula.
+		# RH=relative humidity of air expressed as a percent. or except minimum(.075) humidity to abort error with math.log.
+		RH = RH or minRH  # 0.075
+		E = (RH * Es) / 100
+		# Note: math.log( ) means to take the natural log of the variable in the parentheses
+		# Now you are ready to use the following formula to obtain the dewpoint temperature.
+		try:
+			DewPoint = (-430.22 + 237.7 * math.log(E)) / (-math.log(E) + 19.08)
+		except ValueError:
+			# math domain error, because RH = 0%
+			# return "N/A"
+			DewPoint = 0  # minRH
+		# Note: Due to the rounding of decimal places, your answer may be slightly different from the above answer, but it should be within two degrees.
+		return str(int(round(DewPoint)))
 
 
 	def coordinates(self, lat, long):
