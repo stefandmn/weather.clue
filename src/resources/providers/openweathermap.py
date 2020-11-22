@@ -3,9 +3,12 @@
 import sys
 import socket
 import common
-import unicodedata
-from urllib import request as urllib2
 from .abstract import ContentProvider
+
+if sys.version_info[0] == 3:
+	from urllib import request as urllib2
+else:
+	import urllib2
 
 if hasattr(sys.modules["__main__"], "xbmc"):
 	xbmc = sys.modules["__main__"].xbmc
@@ -41,16 +44,6 @@ class OpenWeatherMap(ContentProvider):
 		socket.setdefaulttimeout(10)
 
 
-	def _find(self, loc):
-		url = self.LOCATION % (urllib2.quote(loc))
-		return super(ContentProvider, self)._find(url)
-
-
-	def _call(self, feature, id):
-		url = self.FORECAST % (feature, id, self.apikey, "metric", self.lang)
-		return self._call(url)
-
-
 	def _fanart(self, code):
 		"""Detect and return fanart code"""
 		return self.ART_BASE[self.ART_DATA[code]]
@@ -74,31 +67,32 @@ class OpenWeatherMap(ContentProvider):
 
 
 	def geoip(self):
+		loc = ''
+		locid = ''
 		data = self.ipinfo()
-		location = ''
-		locationid = ''
 		if data is not None and data.has_key("city"):
-			code = data["city"]
+			geoloc = data["city"]
 			if data.has_key("countryCode"):
-				code += "," + data["countryCode"]
-				common.debug('Identifying GeoIP location: %s' % code, self.code())
-				data = self._find(code)
-				common.debug('Found location data: %s' % data, self.code())
-				if data is not None and data.has_key("list"):
-					item = data["list"][0]
-					location = item["name"]
-					if item.has_key("sys") and item["sys"].has_key("country"):
-						location += "-" + item["sys"]["country"]
-					locationid = item["id"]
-		return location, str(locationid)
+				geoloc += "," + data["countryCode"]
+			common.debug('Identifying GeoIP location: %s' % geoloc, self.code())
+			url = self.LOCATION % ("\"" + geoloc + "\"")
+			data = self._call(url)
+			common.debug('Found location data: %s' % data, self.code())
+			if data is not None and data.has_key("list"):
+				item = data["list"][0]
+				loc = item["name"]
+				if item.has_key("sys") and item["sys"].has_key("country"):
+					loc += "-" + item["sys"]["country"]
+				locid = item["id"]
+		return loc, str(locid)
 
 
-	def location(self, string):
+	def location(self, loc):
 		locs = []
 		locids = []
-		loc = unicodedata.normalize('NFKD', str(string)).encode('ascii', 'ignore')
 		common.debug('Searching for location: %s' % loc, self.code())
-		data = self._find(loc)
+		url = self.LOCATION % ("\"" + loc + "\"")
+		data = self._call(url)
 		common.debug('Found location data: %s' % data, self.code())
 		if data is not None and data.has_key("list"):
 			for item in data["list"]:
@@ -113,8 +107,9 @@ class OpenWeatherMap(ContentProvider):
 
 	def forecast(self, loc, locid):
 		common.debug('Weather forecast for location: %s' % locid, self.code())
+		url = self.FORECAST % ('weather', locid, self.apikey, "metric", self.lang)
+		data = self._call(url)
 		# Current weather forecast
-		data = self._call('weather', locid)
 		if data is not None and data.has_key('weather') and data.has_key("cod") and data["cod"] == 200:
 			# current - standard
 			self.skinproperty('Current.IsFetched', 'true')
@@ -146,7 +141,8 @@ class OpenWeatherMap(ContentProvider):
 			self.skinproperty('Today.HighTemperature', self._2c(data['main']['temp_max']), self.UM_TEMPR)
 			self.skinproperty('Today.LowTemperature', self._2c(data['main']['temp_min']), self.UM_TEMPR)
 			# Hourly weather forecast
-			data = self._call('forecast', locid)
+			url = self.FORECAST % ('forecast', locid, self.apikey, "metric", self.lang)
+			data = self._call(url)
 			if data['list'] is not None and len(data['list']) >= 1:
 				count = 0
 				self.skinproperty('Hourly.IsFetched', 'true')

@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
 	<category label="32101">
-		<setting id="Enabled" label="32110" type="bool" default="true"/>
-		<setting id="ProviderAction" label="32200" type="action" action="RunScript($ID,setup,ProviderCode)" enable="eq(-1,true)" default=""/>
-		<setting label="32121" type="lsep" visible="!eq(-1,)" enable="eq(-2,true)"/>
-		<setting id="APIKeyAction" label="32120" type="action" action="RunScript($ID,setup,ProviderKey)" visible="!eq(-2,)" enable="eq(-3,true)" default=""/>
+		<setting id="Enabled" label="32110" type="bool" default="false"/>
+		<setting id="ShowAPIKeyOption" type="bool" visible="false" default="false"/>
+		<setting id="ProviderCodeAction" label="32200" type="action" action="RunScript($ID,setup,ProviderCode)" enable="eq(-2,true)" default=""/>
+		<setting id="APIKeyAction" label="32120" type="action" action="RunScript($ID,setup,ProviderKey)" visible="!eq(-1,)+eq(-2,true)" enable="eq(-2,true)+eq(-3,true)" default=""/>
+		<setting id="ProviderCode" type="text" visible="false" default=""/>
+		<setting id="APIKey" type="text" visible="false" default=""/>
 	</category>
 	<category label="32102">
-		<setting id="Validate" type="bool" visible="false" default="false"/>
-		<setting id="Provider" type="text" visible="false" default=""/>
-		<setting id="APIKey" type="text" visible="false" default=""/>
-		<setting id="Location1Action" label="32111" type="action" action="RunScript($ID,setup,Location1)" enable="eq(-3,false) + !eq(-2,) + !eq(-1,)" default=""/>
-		<setting id="Location2Action" label="32112" type="action" action="RunScript($ID,setup,Location2)" enable="eq(-4,false) + !eq(-3,) + !eq(-2,) + !eq(-1,)" default=""/>
-		<setting id="Location3Action" label="32113" type="action" action="RunScript($ID,setup,Location3)" enable="eq(-5,false) + !eq(-4,) + !eq(-3,) + !eq(-2,) + !eq(-1,)" default=""/>
-		<setting id="Location4Action" label="32114" type="action" action="RunScript($ID,setup,Location4)" enable="eq(-6,false) + !eq(-5,) + !eq(-4,) + !eq(-3,) + !eq(-2,) + !eq(-1,)" default=""/>
-		<setting id="Location5Action" label="32115" type="action" action="RunScript($ID,setup,Location5)" enable="eq(-7,false) + !eq(-6,) + !eq(-5,) + !eq(-4,) + !eq(-3,) + !eq(-2,) + !eq(-1,)" default=""/>
+		<setting id="ShowLocationOption" type="bool" visible="false" default="false"/>
+		<setting id="Location1Action" label="32111" type="action" action="RunScript($ID,setup,Location1)" enable="eq(-1,true)" default=""/>
+		<setting id="Location2Action" label="32112" type="action" action="RunScript($ID,setup,Location2)" enable="eq(-2,true) + !eq(-1,)" default=""/>
+		<setting id="Location3Action" label="32113" type="action" action="RunScript($ID,setup,Location3)" enable="eq(-3,true) + !eq(-2,) + !eq(-1,)" default=""/>
+		<setting id="Location4Action" label="32114" type="action" action="RunScript($ID,setup,Location4)" enable="eq(-4,true) + !eq(-3,) + !eq(-2,) + !eq(-1,)" default=""/>
+		<setting id="Location5Action" label="32115" type="action" action="RunScript($ID,setup,Location5)" enable="eq(-5,true) + !eq(-4,) + !eq(-3,) + !eq(-2,) + !eq(-1,)" default=""/>
 		<setting id="Location1" type="text" visible="false" default=""/>
 		<setting id="Location2" type="text" visible="false" default=""/>
 		<setting id="Location3" type="text" visible="false" default=""/>

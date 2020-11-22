@@ -76,11 +76,13 @@ class ClueWeather:
 				common.setAddonSetting("Enabled", "true")
 				if provider is not None:
 					provider.clear()
-					common.setAddonSetting("Provider", provider.code())
-					common.setAddonSetting("ProviderAction", provider.name())
+					common.setAddonSetting("ProviderCode", provider.code())
+					common.setAddonSetting("ProviderCodeAction", provider.name())
+					common.setSkinProperty(12600, "SkinProviderCode", provider.code())
 				else:
-					common.setAddonSetting("Provider")
-					common.setAddonSetting("ProviderAction")
+					common.setAddonSetting("ProviderCode")
+					common.setAddonSetting("ProviderCodeAction")
+					common.setSkinProperty(12600, "SkinProviderCode")
 				# reset dependent settings
 				common.setAddonSetting("APIKey")
 				common.setAddonSetting("APIKeyAction")
@@ -89,8 +91,17 @@ class ClueWeather:
 					common.setAddonSetting("Location%i" % index)
 					common.debug('Reset location %i' %index)
 				# trigger provider validation
-				common.debug("Asking for provider validation")
-				common.setAddonSetting("Validate", "true")
+				try:
+					provider.validate()
+					common.debug("Provider validation is not required")
+					common.setAddonSetting("ShowAPIKeyOption", "false")
+					common.setAddonSetting("ShowLocationOption", "true")
+					common.setAddonSetting("APIKey")
+					common.setAddonSetting("APIKeyAction")
+				except:
+					common.debug("Asking for provider validation")
+					common.setAddonSetting("ShowAPIKeyOption", "true")
+					common.setAddonSetting("ShowLocationOption", "false")
 			else:
 				common.debug("Provider configuration was cancelled")
 		elif str(config) == "ProviderKey":
@@ -100,8 +111,16 @@ class ClueWeather:
 				common.setAddonSetting("APIKey", inputval)
 				common.setAddonSetting("APIKeyAction", "".rjust(len(inputval), "*"))
 				# trigger provider validation
-				common.debug("Asking for provider validation")
-				common.setAddonSetting("Validate", "true")
+				try:
+					provider = self.getProviderByCode(common.getSkinProperty(12600, "SkinProviderCode"))
+					provider.validate()
+					common.debug("Provider validation is completed")
+					common.setAddonSetting("ShowLocationOption", "true")
+					common.setSkinProperty(12600, "SkinProviderAPIKey", inputval)
+				except RuntimeError as re:
+					common.debug("Provider validation retured an error: %s" %re.message)
+					common.setAddonSetting("ShowLocationOption", "false")
+					common.DlgNotificationMsg(32121)
 			else:
 				common.debug("Provider API key configuration was cancelled")
 		else:
@@ -111,7 +130,9 @@ class ClueWeather:
 	def setLocation(self, config):
 		"""Runs configuration flow to setup new location"""
 		common.debug("Setting new location (%s)" %config)
-		provider = self.getProviderByCode(common.getAddonSetting('Provider'))
+		provider = self.getProviderByCode(common.getAddonSetting('ProviderCode'))
+		if provider is None:
+				provider = self.getProviderByCode(common.getSkinProperty(12600, "SkinProviderCode"))
 		if provider is None:
 			raise RuntimeError("No content provider selected for configuration")
 		inputval = common.StringInputDialog(14024, common.getAddonSetting(config + "Action"))
@@ -142,19 +163,18 @@ class ClueWeather:
 		if not common.setting('Enabled'):
 			return
 		# check provider configuration
-		provider = self.getProviderByCode(common.getAddonSetting('Provider'))
+		provider = self.getProviderByCode(common.getAddonSetting('ProviderCode'))
 		common.debug("Found provider to run forecast workflow: %s" %provider)
 		if provider is None:
 			common.NotificationMsg(32202, 15000)
 			return
-		if provider is not None and (common.setting('APIKey') == '' or common.setting('APIKey') is None):
+		if provider is not None and ((common.setting('APIKey') == '' or common.setting('APIKey') is None) and common.any2bool(common.getAddonSetting("ShowAPIKeyOption"))):
 			common.NotificationMsg(32123, 15000)
 			return
 		# validate provider configuration
-		if common.any2bool(common.getAddonSetting("Validate")):
+		if common.any2bool(common.getAddonSetting("ShowAPIKeyOption")):
 			try:
 				provider.validate()
-				common.setAddonSetting("Validate", "false")
 				common.debug("Content provider is valid, running weather forecast workflow")
 			except:
 				common.debug("Content provider is invalid, reset forecast skin properties")

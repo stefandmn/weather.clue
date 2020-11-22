@@ -7,8 +7,13 @@ import json
 import time
 import math
 import common
+import requests
 from io import StringIO
-from urllib import request as urllib2
+
+if sys.version_info[0] == 3:
+	from urllib import request as urllib2
+else:
+	import urllib2
 
 if hasattr(sys.modules["__main__"], "xbmc"):
 	xbmc = sys.modules["__main__"].xbmc
@@ -34,8 +39,6 @@ else:
 
 class ContentProvider(object):
 	__metaclass__ = abc.ABCMeta
-	LOCATION = ''
-	FORECAST = ''
 	LANGUAGE = xbmc.getLanguage().lower()
 	UM_SPEED = xbmc.getRegion('speedunit')
 	UM_TEMPR = xbmc.getRegion('tempunit')
@@ -128,40 +131,17 @@ class ContentProvider(object):
 
 	@property
 	def apikey(self):
-		return common.setting("APIKey")
-
-
-	def _find(self, url):
-		common.debug("Calling URL: %s" % url, self.code())
-		try:
-			req = urllib2.urlopen(url)
-			response = req.read()
-			req.close()
-		except:
-			response = ''
-		return self._parse(response)
+		return common.setting("APIKey") if common.setting("APIKey") is not None else common.getSkinProperty(12600, "SkinProviderAPIKey")
 
 
 	def _call(self, url):
-		retry = 0
-		data = None
-		while data is None and retry < 6 and not xbmc.abortRequested:
-			try:
-				common.debug("Calling URL: %s" % url, self.code())
-				req = urllib2.Request(url)
-				req.add_header('Accept-encoding', 'gzip')
-				response = urllib2.urlopen(req)
-				if response.info().get('Content-Encoding') == 'gzip':
-					buf = StringIO(response.read())
-					compr = gzip.GzipFile(fileobj=buf)
-					data = compr.read()
-				else:
-					data = response.read()
-				response.close()
-			except:
-				data = None
-				retry += 1
-		return self._parse(data)
+		common.debug("Calling URL: %s" % url, self.code())
+		try:
+			response = requests.get(url)
+		except BaseException as be:
+			common.debug("Exception: %s" % str(be))
+			response = ''
+		return self._parse(response)
 
 
 	def _parse(self, content):

@@ -3,9 +3,12 @@
 import sys
 import socket
 import common
-import unicodedata
-from urllib import request as urllib2
 from .abstract import ContentProvider
+
+if sys.version_info[0] == 3:
+	from urllib import request as urllib2
+else:
+	import urllib2
 
 if hasattr(sys.modules["__main__"], "xbmc"):
 	xbmc = sys.modules["__main__"].xbmc
@@ -36,16 +39,6 @@ class DarkSky(ContentProvider):
 		socket.setdefaulttimeout(10)
 
 
-	def _find(self, loc):
-		url = self.LOCATION % (urllib2.quote(loc))
-		return super(ContentProvider, self)._find(url)
-
-
-	def _call(self, id):
-		url = self.FORECAST % (self.apikey, id, self.lang, "si")
-		return super(ContentProvider, self)._call(url)
-
-
 	def _fanart(self, code):
 		"""Detect and return fanart code"""
 		return self.ART_BASE[self.ART_DATA[code]]
@@ -69,33 +62,36 @@ class DarkSky(ContentProvider):
 
 
 	def geoip(self):
+		loc = ''
+		locid = ''
 		data = self.ipinfo()
-		location = ''
-		locationid = ''
 		if data is not None and data.has_key("city"):
-			code = data["city"]
+			geoloc = data["city"]
+			if data.has_key("regionName"):
+				geoloc += "," + data["regionName"]
 			if data.has_key("country"):
-				code += "," + data["country"]
-				common.debug('Identifying GeoIP location: %s' % code, self.code())
-				data = self._find(code)
-				common.debug('Found location data: %s' % data, self.code())
-				if data is not None and data.has_key("latitude"):
-					self.coordinates(data["latitude"], data["longitude"])
-					location = code.replace(",", "-")
-					locationid = str(self.latitude) + "," + str(self.longitude)
-		return location, str(locationid)
+				geoloc += "," + data["country"]
+			common.debug('Identifying GeoIP location: %s' % geoloc, self.code())
+			url = self.LOCATION % ("\"" + geoloc + "\"")
+			data = self._call(url)
+			common.debug('Found location data: %s' % data, self.code())
+			if data is not None and data.has_key("latitude"):
+				self.coordinates(data["latitude"], data["longitude"])
+				loc = geoloc.replace(",", "-")
+				locid = str(self.latitude) + "," + str(self.longitude)
+		return loc, str(locid)
 
 
-	def location(self, string):
+	def location(self, loc):
 		locs = []
 		locids = []
-		loc = unicodedata.normalize('NFKD', str(string)).encode('ascii', 'ignore')
 		common.debug('Searching for location: %s' % loc, self.code())
-		data = self._find(loc)
+		url = self.LOCATION % ("\"" + loc + "\"")
+		data = self._call(url)
 		common.debug('Found location data: %s' % data, self.code())
 		if data is not None and data.has_key("latitude"):
 			self.coordinates(data["latitude"], data["longitude"])
-			location = string.replace(",", "-")
+			location = loc
 			locationid = str(self.latitude) + "," + str(self.longitude)
 			locs.append(location)
 			locids.append(str(locationid))
@@ -104,7 +100,8 @@ class DarkSky(ContentProvider):
 
 	def forecast(self, loc, locid):
 		common.debug('Weather forecast for location: %s' % locid, self.code())
-		data = self._call(locid)
+		url = self.FORECAST %(self.apikey, locid, self.lang, "si")
+		data = self._call(url)
 		# Current weather forecast
 		if data is not None and data.has_key('currently'):
 			item = data['currently']

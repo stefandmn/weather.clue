@@ -50,7 +50,7 @@ msgid "Provider API Key"
 msgstr ""
 
 msgctxt "#32121"
-msgid "   > Subscribe and obtain weather provider API key"
+msgid "API key is invalid, please try again!"
 msgstr ""
 
 msgctxt "#32122"

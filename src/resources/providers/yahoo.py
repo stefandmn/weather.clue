@@ -4,9 +4,7 @@ import sys
 import time
 import socket
 import common
-import unicodedata
 from datetime import datetime
-from urllib import request as urllib2
 from .abstract import ContentProvider
 
 if hasattr(sys.modules["__main__"], "xbmc"):
@@ -38,54 +36,45 @@ class Yahoo(ContentProvider):
 	def _2shdate(self, value):
 		ts = time.strptime(value, "%Y-%m-%dT%H:%M:%S.%zZ")
 		dt = datetime.fromtimestamp(time.mktime(ts))
-		return super(ContentProvider, self)._2shdate(dt.timestamp())
+		return ContentProvider._2shdate(self, dt.timestamp())
 
 
 	def _2lndate(self, value):
 		ts = time.strptime(value, "%Y-%m-%dT%H:%M:%S.%zZ")
 		dt = datetime.fromtimestamp(time.mktime(ts))
-		return super(ContentProvider, self)._2lndate(dt.timestamp())
-
-
-	def _find(self, loc):
-		url = self.LOCATION % (urllib2.quote(loc))
-		return super(ContentProvider, self)._find(url)
-
-
-	def _call(self, id):
-		url = self.FORECAST % id
-		return super(ContentProvider, self)._call(url)
+		return ContentProvider._2lndate(self, dt.timestamp())
 
 
 	def geoip(self):
+		loc = ''
+		locid = ''
 		data = self.ipinfo()
-		location = ''
-		locationid = ''
 		if data is not None and data.has_key("city"):
-			code = data["city"]
+			geoloc = data["city"]
 			if data.has_key("regionName"):
-				code += "," + data["regionName"]
-				if data.has_key("country"):
-					code += "," + data["country"]
-				common.debug('Identifying GeoIP location: %s' % code, self.code())
-				data = self._find(code)
-				common.debug('Found location data: %s' % data, self.code())
-				if data is not None and data.has_key("woeid"):
-					self.coordinates(data["lat"], data["lon"])
-					locationid = data["woeid"]
-					if data.has_key("qualifiedName"):
-						location = data["qualifiedName"]
-					else:
-						location = code
-		return location, str(locationid)
+				geoloc += "," + data["regionName"]
+			if data.has_key("country"):
+				geoloc += "," + data["country"]
+			common.debug('Identifying GeoIP location: %s' % geoloc, self.code())
+			url = self.LOCATION % ("\"" + geoloc + "\"")
+			data = self._call(url)
+			common.debug('Found location data: %s' % data, self.code())
+			if data is not None and data.has_key("woeid"):
+				self.coordinates(data["lat"], data["lon"])
+				locid = data["woeid"]
+				if data.has_key("qualifiedName"):
+					loc = data["qualifiedName"]
+				else:
+					loc = geoloc
+		return loc, str(locid)
 
 
-	def location(self, string):
+	def location(self, loc):
 		locs = []
 		locids = []
-		loc = unicodedata.normalize('NFKD', str(string)).encode('ascii', 'ignore')
 		common.debug('Searching for location: %s' % loc, self.code())
-		data = self._find(loc)
+		url = self.LOCATION % ("\"" + loc + "\"")
+		data = self._call(url)
 		common.debug('Found location data: %s' % data, self.code())
 		if data is not None and isinstance(data, list):
 			for item in data:
@@ -94,7 +83,6 @@ class Yahoo(ContentProvider):
 					location = item["qualifiedName"]
 				else:
 					location = item["city"] + "," + item["country"]
-
 				locs.append(location)
 				locids.append(str(locationid))
 		return locs, locids
@@ -102,8 +90,9 @@ class Yahoo(ContentProvider):
 
 	def forecast(self, loc, locid):
 		common.debug('Weather forecast for location: %s' % locid, self.code())
+		url = self.FORECAST % locid
+		data = self._call(url)
 		# Current weather forecast
-		data = self._call(locid)
 		if data is not None and data.has_key('weather') and data.has_key("cod") and data["cod"] == 200:
 			data = data['weathers'][0]
 			# Current - standard
