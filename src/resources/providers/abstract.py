@@ -2,18 +2,10 @@
 
 import sys
 import abc
-import gzip
 import json
 import time
 import math
 import common
-import requests
-from io import StringIO
-
-if sys.version_info[0] == 3:
-	from urllib import request as urllib2
-else:
-	import urllib2
 
 if hasattr(sys.modules["__main__"], "xbmc"):
 	xbmc = sys.modules["__main__"].xbmc
@@ -135,13 +127,8 @@ class ContentProvider(object):
 
 
 	def _call(self, url):
-		common.debug("Calling URL: %s" % url, self.code())
-		try:
-			response = requests.get(url)
-		except BaseException as be:
-			common.debug("Exception: %s" % str(be))
-			response = ''
-		return self._parse(response)
+		response = common.urlcall(url)
+		return self._parse(response.decode('utf-8'))
 
 
 	def _parse(self, content):
@@ -254,13 +241,7 @@ class ContentProvider(object):
 		:return: a JSON message containing the specified message parts.
 		"""
 		url = "http://ip-api.com/json/"
-		try:
-			req = urllib2.urlopen(url)
-			data = req.read()
-			req.close()
-		except:
-			data = ''
-		return self._parse(data)
+		return self._call(url)
 
 
 	@property
