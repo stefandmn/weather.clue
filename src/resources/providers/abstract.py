@@ -186,6 +186,12 @@ class ContentProvider(object):
 		self.skinproperty('Current.Visibility')
 		self.skinproperty('Current.OutlookIcon')
 		self.skinproperty('Current.FanartCode')
+		self.skinproperty('Forecast.City')
+		self.skinproperty('Forecast.Country')
+		self.skinproperty('Forecast.Latitude')
+		self.skinproperty('Forecast.Longitude')
+		self.skinproperty('Forecast.Updated')
+		self.skinproperty('Today.IsFetched')
 		self.skinproperty('Today.Sunrise')
 		self.skinproperty('Today.Sunset')
 		self.skinproperty('Today.HighTemperature')
@@ -274,8 +280,22 @@ class ContentProvider(object):
 
 
 	def _2shday(self, value):
-		return time.strftime('%a', time.localtime(value))
-
+		if not isinstance(value, int):
+			return time.strftime('%a', time.localtime(value))
+		if value == 0:
+			return xbmc.getLocalizedString(47)
+		elif value == 1:
+			return xbmc.getLocalizedString(41)
+		elif value == 2:
+			return xbmc.getLocalizedString(42)
+		elif value == 3:
+			return xbmc.getLocalizedString(43)
+		elif value == 4:
+			return xbmc.getLocalizedString(44)
+		elif value == 5:
+			return xbmc.getLocalizedString(45)
+		elif value == 6:
+			return xbmc.getLocalizedString(46)
 
 	def _2lnday(self, value):
 		if not isinstance(value, int):
@@ -311,28 +331,22 @@ class ContentProvider(object):
 	def _2shdatetime(self, value):
 		return time.strftime('%d %b %H:%M', time.localtime(value))
 
-	def _dewpoint(Tc=0, RH=93, minRH=(0, 0.075)[0]):
-		""" Dewpoint from relative humidity and temperature
-			If you know the relative humidity and the air temperature,
-			and want to calculate the dewpoint, the formulas are as follows.
 
-			getDewPoint( tCelsius, humidity )
+	def _dewpoint(self, Tc=0, RH=93, minRH=(0, 0.075)[0]):
+		""" Dewpoint from relative humidity and temperature. using relative
+		humidity and the air temperature
 		"""
-		# First, if your air temperature is in degrees Fahrenheit, then you must convert it to degrees Celsius by using the Fahrenheit to Celsius formula.
-		# Tc = 5.0 / 9.0 * ( Tf - 32.0 )
-		# The next step is to obtain the saturation vapor pressure(Es) using this formula as before when air temperature is known.
-		Es = 6.11 * 10.0 ** (7.5 * Tc / (237.7 + Tc))
-		# The next step is to use the saturation vapor pressure and the relative humidity to compute the actual vapor pressure(E) of the air. This can be done with the following formula.
+		# 1) Obtain the saturation vapor pressure (Es) using this formula as before when air temperature is known.
+		Es = 6.11 * 10.0 ** (7.5 * Tc/(237.7 + Tc))
+		# 2) Use the saturation vapor pressure and the relative humidity to compute the actual vapor pressure (E) of the air.
 		# RH=relative humidity of air expressed as a percent. or except minimum(.075) humidity to abort error with math.log.
-		RH = RH or minRH  # 0.075
-		E = (RH * Es) / 100
-		# Note: math.log( ) means to take the natural log of the variable in the parentheses
-		# Now you are ready to use the following formula to obtain the dewpoint temperature.
+		RH = int(RH) or minRH  # 0.075
+		E = (RH * Es)/100
+		# 3) Obtain the dewpoint temperature.
 		try:
 			DewPoint = (-430.22 + 237.7 * math.log(E)) / (-math.log(E) + 19.08)
 		except ValueError:
-			# math domain error, because RH = 0%
-			# return "N/A"
+			# math domain error, because RH = 0%, returns "N/A"
 			DewPoint = 0  # minRH
 		# Note: Due to the rounding of decimal places, your answer may be slightly different from the above answer, but it should be within two degrees.
 		return str(int(round(DewPoint)))
@@ -426,6 +440,7 @@ class ContentProvider(object):
 		else:
 			temp = value
 		return temp
+
 
 	def _2kph(self, value, um='mps'):
 		"""
