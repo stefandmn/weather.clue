@@ -32,8 +32,6 @@ else:
 class ContentProvider(object):
 	__metaclass__ = abc.ABCMeta
 	LANGUAGE = xbmc.getLanguage().lower()
-	UM_SPEED = xbmc.getRegion('speedunit')
-	UM_TEMPR = xbmc.getRegion('tempunit')
 	ART_BASE = {"Clear/Day": 101,
 				"Clear/Night": 102,
 				"Sunny/Day": 101,
@@ -367,122 +365,221 @@ class ContentProvider(object):
 		return self._longitude
 
 
-	def _2temp(self, value):
+	@property
+	def UM_TEMPERATURE(self):
+		return xbmc.getRegion('tempunit')
+
+
+	def _2temperature(self, value, iu=None, ou=None, um=False):
 		"""
-		Calculates and returns the temperature in unit described by the system
-		:param value: temperature received in C
-		:return: transformed temperature
+		Calculates and returns the temperature based on input and output unit measure.
+		In case input and/or output are null then the system default unit is considered.
+		When the output unit is null means that the conversion is done and returned using
+		system unit.
+		:param value: temperature received in input unit
+		:param iu: specify unit of the input value
+		:param ou: specify the unit of the output value (converted value)
+		:param um: specify if the unit measure representation to be included in the output
+		:return: transformed temperature in output unit measure
 		"""
-		if len(self.UM_TEMPR) > 1:
-			if self.UM_TEMPR[1:].lower() == 'c':
-				temp = value
-			elif self.UM_TEMPR[1:].lower() == 'f':
-				temp = ((5 * value) / 9) + 32
-			elif self.UM_TEMPR[1:].lower() == 'k':
-				temp = value + 273.15
-			else:
-				temp = value
-		elif len(self.UM_TEMPR) == 1:
-			if self.UM_TEMPR.lower() == 'c':
-				temp = value
-			elif self.UM_TEMPR.lower() == 'f':
-				temp = ((5 * value) / 9) + 32
-			elif self.UM_TEMPR.lower() == 'k':
-				temp = value + 273.15
-			else:
-				temp = value
-		else:
+		value = float(value)
+		default = str(self.UM_TEMPERATURE).replace('°', '').strip().lower()
+		iu = default if iu is None else iu.lower()
+		ou = default if ou is None else ou.lower()
+		if (iu is not None and len(iu) > 1):
+			iu = iu[0:]
+		if (ou is not None and len(ou) > 1):
+			ou = ou[0:]
+		if iu == ou:
 			temp = value
-		return temp
-
-
-	def _2wind(self, value):
-		"""
-		Calculates and returns the wind speed in unit described by the system
-		:param value: wind speed received in mps
-		:return: transformed speed
-		"""
-		if self.UM_SPEED.lower() == 'mps':
-			wind = value
-		elif self.UM_SPEED.lower() == 'km/h' or self.UM_SPEED.lower() == 'kmph' or self.UM_SPEED.lower() == 'kph':
-			wind = value * 3.6
-		elif self.UM_SPEED.lower() == 'mph':
-			wind = value * 2.236934
 		else:
-			wind = value
-		return wind
-
-
-	def _2c(self, value, um='c'):
-		"""
-		Calculates and return temperature in °C
-		:param value: value read from provider
-		:return: transformed temperature based on detected units
-		"""
-		if len(um) > 1:
-			if um[1:].lower() == 'c':
-				temp = value
-			elif um[1:].lower() == 'f':
+			if iu == 'f' and ou == 'c':
 				temp = 5 * (value - 32) / 9
-			elif um[1:].lower() == 'k':
+			elif iu == 'k' and ou == 'c':
 				temp = value - 273.15
+			elif iu == 'c' and ou == 'f':
+				temp = (9 * value / 5) + 32
+			elif iu == 'k' and ou == 'f':
+				temp = (9 * value / 5) - 459.67
+			elif iu == 'c' and ou == 'k':
+				temp = value + 273.15
+			elif iu == 'f' and ou == 'k':
+				temp = 5 * (value + 459.67) / 9
 			else:
 				temp = value
-		elif len(um) == 1:
-			if um.lower() == 'c':
-				temp = value
-			elif um.lower() == 'f':
-				temp = 5 * (value - 32) / 9
-			elif um.lower() == 'k':
-				temp = value - 273.15
+		if um:
+			if ou is None:
+				return str(round(temp, 1)) + " " + self.UM_TEMPERATURE
+			elif ou == 'c':
+				return str(round(temp, 1)) + " °C"
+			elif ou == 'f':
+				return str(round(temp, 1)) + " °F"
+			elif ou == 'k':
+				return str(round(temp, 1)) + " K"
 			else:
-				temp = value
+				return str(round(temp, 1))
 		else:
-			temp = value
-		return temp
-
-
-	def _2kph(self, value, um='mps'):
-		"""
-		Get wind speed in km/h
-		:param value: value read from provider
-		:return: transformed wind speed based on detected units
-		"""
-		if um.lower() == 'mps':
-			speed = value * 3.6
-		elif um.lower() == 'km/h' or um.lower() == 'kmph' or um.lower() == 'kph':
-			speed = value
-		elif um.lower() == 'mph':
-			speed = value * 1.609344
-		else:
-			speed = value
-		return speed
-
-
-	def _2km(self, value, um='m'):
-		"""
-		Get distance in km
-		:param value: value read from provider
-		:return: transformed distance based on detected units
-		"""
-		if um.lower() == 'm':
-			speed = value / 1000
-		elif um.lower() == 'km' or um.lower() == 'k':
-			speed = value
-		elif um.lower() == 'ml' or um.lower() == 'mile' or um.lower() == 'miles':
-			speed = value * 1.609344
-		else:
-			speed = value
-		return speed
+			return round(temp, 1)
 
 
 	@property
-	def UM_DSTNC(self):
-		if self.UM_SPEED.lower() == 'mps':
-			return "m"
-		elif self.UM_SPEED.lower() == 'km/h' or self.UM_SPEED.lower() == 'kmph' or self.UM_SPEED.lower() == 'kph':
-			return "km"
-		elif self.UM_SPEED.lower() == 'mph':
-			return "miles"
+	def UM_SPEED(self):
+		speed = xbmc.getRegion('speedunit')
+		if speed.lower() == 'mps':
+			return "mps"
+		elif speed.lower() == 'km/h' or speed.lower() == 'kmph' or speed.lower() == 'kph':
+			return "kmh"
+		elif speed.lower() == 'mph':
+			return "mph"
 		else:
 			return ""
+
+
+	def _2speed(self, value, iu=None, ou=None, um=False):
+		"""
+		Calculates and returns the wind speed in unit described by the system
+		:param value: current wind speed
+		:param iu: specify unit of the input value
+		:param ou: specify the unit of the output value (converted value)
+		:param um: specify if the unit measure representation to be included in the output
+		:return: transformed speed
+		"""
+		value = float(value)
+		default = str(self.UM_SPEED).lower()
+		iu = default if iu is None else iu.lower()
+		ou = default if ou is None else ou.lower()
+		if iu == ou:
+			speed = value
+		else:
+			if iu == 'mps' and ou == 'kph':
+				speed = value * 3.6
+			elif iu == 'mph' and ou == 'kph':
+				speed = value * 1.609344
+			elif iu == 'kph' and ou == 'mps':
+				speed = value * 0.277778
+			elif iu == 'mph' and ou == 'mps':
+				speed = value * 0.44704
+			elif iu == 'kph' and ou == 'mph':
+				speed = value * 0.621371
+			elif iu == 'mps' and ou == 'mph':
+				speed = value * 2.236936
+			else:
+				speed = value
+		if um:
+			if ou is None:
+				return str(round(speed, 1)) + " " + self.UM_SPEED
+			elif ou == 'kph':
+				return str(round(speed, 1)) + " kph"
+			elif ou == 'mps':
+				return str(round(speed, 1)) + " mps"
+			elif ou == 'mph':
+				return str(round(speed, 1)) + " mps"
+			else:
+				return str(round(speed, 1))
+		else:
+			return round(speed, 1)
+
+
+	@property
+	def UM_DISTANCE(self):
+		speed = xbmc.getRegion('speedunit')
+		if speed.lower() == 'mps':
+			return "m"
+		elif speed.lower() == 'km/h' or speed.lower() == 'kmph' or speed.lower() == 'kph':
+			return "km"
+		elif speed.lower() == 'mph':
+			return "mi"
+		else:
+			return ""
+
+
+	def _2distance(self, value, iu=None, ou=None, um=False):
+		"""
+		Calculate and convert distance based on input value and transformed using input and output units
+		:param value: value read from provider
+		:param iu: specify unit of the input value
+		:param ou: specify the unit of the output value (converted value)
+		:param um: specify if the unit measure representation to be included in the output
+		:return: transformed distance based on detected units
+		"""
+		value = float(value)
+		default = str(self.UM_DISTANCE).lower()
+		iu = default if iu is None else iu.lower()
+		ou = default if ou is None else ou.lower()
+		if iu == ou:
+			dist = value
+		else:
+			if iu == 'km' and ou == 'm':
+				dist = value * 1000
+			elif iu == 'mi' and ou == 'm':
+				dist = value * 1609.34
+			elif iu == 'm' and ou == 'km':
+				dist = value / 1000
+			elif iu == 'mi' and ou == 'km':
+				dist = value * 1.60934
+			elif iu == 'm' and ou == 'mi':
+				dist = value / 1609.34
+			elif iu == 'km' and ou == 'mi':
+				dist = value / 1.60934
+			else:
+				dist = value
+		if um:
+			if ou is None:
+				return str(round(dist, 1)) + " " + self.UM_DISTANCE
+			elif ou == 'm':
+				return str(round(dist, 1)) + " m"
+			elif ou == 'km':
+				return str(round(dist, 1)) + " km"
+			elif ou == 'mi':
+				return str(round(dist, 1)) + " mi"
+			else:
+				return str(round(dist, 1))
+		else:
+			return round(dist, 1)
+
+
+	def _2pressure(self, value, iu=None, ou=None, um=False):
+		"""
+		Calculates pressure and converted based on input and output units
+		:param value: value read from provider
+		:param iu: specify unit of the input value
+		:param ou: specify the unit of the output value (converted value)
+		:param um: specify if the unit measure representation to be included in the output
+		:return: transformed pressure based on detected units
+		"""
+		value = float(value)
+		default = str('hPa').lower()
+		iu = default if iu is None else iu.lower()
+		ou = default if ou is None else ou.lower()
+		if iu == ou:
+			dist = value
+		else:
+			if iu == 'hpa' and ou == 'bar':
+				dist = value * 1000
+			elif iu == 'hpa' and ou == 'psi':
+				dist = value * 0.0145038
+			elif iu == 'bar' and ou == 'hpa':
+				dist = value / 1000
+			elif iu == 'bar' and ou == 'psi':
+				dist = value * 14.5038
+			elif iu == 'psi' and ou == 'hpa':
+				dist = value * 68.9476
+			elif iu == 'psi' and ou == 'bar':
+				dist = value * 0.0689476
+			else:
+				dist = value
+		if um:
+			if ou is None:
+				return str(round(dist, 1)) + " hPa"
+			elif ou == 'hpa':
+				return str(round(dist, 1)) + " hPa"
+			elif ou == 'bar':
+				return str(round(dist, 1)) + " Bar"
+			elif ou == 'psi':
+				return str(round(dist, 1)) + " Psi"
+			else:
+				return str(round(dist, 1))
+		else:
+			return round(dist, 1)
+
+
