@@ -5,11 +5,6 @@ import socket
 import common
 from .abstract import ContentProvider
 
-if sys.version_info[0] == 3:
-	from urllib import request as urllib2
-else:
-	import urllib2
-
 if hasattr(sys.modules["__main__"], "xbmc"):
 	xbmc = sys.modules["__main__"].xbmc
 else:
@@ -53,12 +48,9 @@ class DarkSky(ContentProvider):
 
 
 	def validate(self):
-		_url = "https://api.darksky.net/forecast/%s/37.8267,-122.4233?exclude=minutely,hourly,daily,alerts,flags" %self.apikey
-		try:
-			req = urllib2.urlopen(_url)
-			req.close()
-		except:
-			raise RuntimeError("Invalid provider configuration")
+		response = self._parse(common.urlcall("https://api.darksky.net/forecast/%s/37.8267,-122.4233?exclude=minutely,hourly,daily,alerts,flags" %self.apikey, thrown=True))
+		if response is not None and response.has_key("error"):
+			raise RuntimeError(response["error"])
 
 
 	def geoip(self):
@@ -110,7 +102,7 @@ class DarkSky(ContentProvider):
 			self.skinproperty('Current.Location', loc)
 			self.skinproperty('Current.Latitude', data['latitude'])
 			self.skinproperty('Current.Longitude', data['longitude'])
-			self.skinproperty('Current.Condition', item["summary"].capitalize())
+			self.skinproperty('Current.Condition', common.utf8(item["summary"]).capitalize())
 			self.skinproperty('Current.Temperature', self._2temperature(item['temperature']))
 			self.skinproperty('Current.Wind', self._2speed(item['windSpeed'], iu='mps'))
 			self.skinproperty('Current.WindDirection', item['windBearing'], '°') if item.has_key('windBearing') else self.skinproperty('Current.WindDirection')
@@ -149,7 +141,7 @@ class DarkSky(ContentProvider):
 					self.skinproperty('Day%i.Title' % count, self._2lnday(item['time']))
 					self.skinproperty('Day%i.HighTemp' % count, self._2temperature(item['temperatureHigh'], iu='c',um=True))
 					self.skinproperty('Day%i.LowTemp' % count, self._2temperature(item['temperatureLow'], iu='c',um=True))
-					self.skinproperty('Day%i.Outlook' % count, item["summary"].capitalize())
+					self.skinproperty('Day%i.Outlook' % count, common.utf8(item["summary"]).capitalize())
 					self.skinproperty('Day%i.OutlookIcon' % count, '%s.png' % self._fanart(item["icon"]))
 					self.skinproperty('Day%i.FanartCode' % count, self._fanart(item["icon"]))
 					# Extended
@@ -157,10 +149,10 @@ class DarkSky(ContentProvider):
 					self.skinproperty('Daily.%i.LongDay' % count, self._2lnday(item['time']))
 					self.skinproperty('Daily.%i.ShortDate' % count, self._2shday(item['time']))
 					self.skinproperty('Daily.%i.LongDate' % count, self._2lnday(item['time']))
-					self.skinproperty('Daily.%i.Outlook' % count, item["summary"].capitalize())
+					self.skinproperty('Daily.%i.Outlook' % count, common.utf8(item["summary"]).capitalize())
 					self.skinproperty('Daily.%i.OutlookIcon' % count, '%s.png' % self._fanart(item["icon"]))
 					self.skinproperty('Daily.%i.FanartCode' % count, self._fanart(item["icon"]))
-					self.skinproperty('Daily.%i.Condition' % count, item["summary"].capitalize())
+					self.skinproperty('Daily.%i.Condition' % count, common.utf8(item["summary"]).capitalize())
 					self.skinproperty('Daily.%i.Wind' % count, self._2speed(item['windSpeed']))
 					self.skinproperty('Daily.%i.WindDirection' % count, item['windBearing'], '°') if item.has_key('windBearing') else self.skinproperty('Day.%i.WindDirection' % count)
 					self.skinproperty('Daily.%i.Humidity' % count, 100*item['humidity'])
@@ -178,9 +170,9 @@ class DarkSky(ContentProvider):
 			for item in data['hourly']['data']:
 				self.skinproperty('Hourly.%i.Time' % count, self._2shtime(item['time']))
 				self.skinproperty('Hourly.%i.ShortDate' % count, self._2shdate(item['time']))
-				self.skinproperty('Hourly.%i.Condition' % count, item["summary"].capitalize())
+				self.skinproperty('Hourly.%i.Condition' % count, common.utf8(item["summary"]).capitalize())
 				self.skinproperty('Hourly.%i.Temperature' % count, self._2temperature(item['temperature'], iu='c',um=True))
-				self.skinproperty('Hourly.%i.Outlook' % count, item["summary"].capitalize())
+				self.skinproperty('Hourly.%i.Outlook' % count, common.utf8(item["summary"]).capitalize())
 				self.skinproperty('Hourly.%i.OutlookIcon' % count, '%s.png' % self._fanart(item["icon"]))
 				self.skinproperty('Hourly.%i.FanartCode' % count, self._fanart(item["icon"]))
 				self.skinproperty('Hourly.%i.Wind' % count, self._2speed(item['windSpeed']))

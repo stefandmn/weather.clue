@@ -33,6 +33,20 @@ class ClueWeather:
 				common.error('Unexpected error while reading [%s] content provider: %s' %(str(cls),str(be)))
 
 
+	def getDetectedProvider(self):
+		provider = self.getProviderByCode(common.getSkinProperty(12600, "SkinProviderCode"))
+		if provider is None:
+			provider = self.getProviderByCode(common.getAddonSetting('ProviderCode'))
+		return provider
+
+
+	def getDetectedAPIKey(self):
+		apikey = common.getSkinProperty(12600, "SkinProviderAPIKey")
+		if apikey is None or apikey == '':
+			apikey = common.getAddonSetting("APIKey")
+		return apikey
+
+
 	def getProviderByCode(self, code):
 		"""Returns the content provider having the specified signature """
 		provider = None
@@ -106,19 +120,21 @@ class ClueWeather:
 				common.debug("Provider configuration was cancelled")
 		elif str(config) == "ProviderKey":
 			common.debug("Setting new provider API key")
-			inputval = common.StringInputDialog(32122, common.getAddonSetting("APIKey"))
+			inputval = common.StringInputDialog(32122, self.getDetectedAPIKey())
 			if inputval is not None and inputval != '':
 				common.setAddonSetting("APIKey", inputval)
 				common.setAddonSetting("APIKeyAction", "".rjust(len(inputval), "*"))
+				common.setSkinProperty(12600, "SkinProviderAPIKey", inputval)
 				# trigger provider validation
 				try:
-					provider = self.getProviderByCode(common.getSkinProperty(12600, "SkinProviderCode"))
+					provider = self.getDetectedProvider()
+					if provider is None:
+						raise RuntimeError("No content provider found for configuration to run the validation process")
 					provider.validate()
 					common.debug("Provider validation is completed")
 					common.setAddonSetting("ShowLocationOption", "true")
-					common.setSkinProperty(12600, "SkinProviderAPIKey", inputval)
 				except RuntimeError as re:
-					common.debug("Provider validation retured an error: %s" %re.message)
+					common.debug("Provider validation returned an error for '%s' API key: %s" %(inputval, str(re)))
 					common.setAddonSetting("ShowLocationOption", "false")
 					common.DlgNotificationMsg(32121)
 			else:
@@ -130,11 +146,9 @@ class ClueWeather:
 	def setLocation(self, config):
 		"""Runs configuration flow to setup new location"""
 		common.debug("Setting new location (%s)" %config)
-		provider = self.getProviderByCode(common.getAddonSetting('ProviderCode'))
+		provider = self.getDetectedProvider()
 		if provider is None:
-				provider = self.getProviderByCode(common.getSkinProperty(12600, "SkinProviderCode"))
-		if provider is None:
-			raise RuntimeError("No content provider selected for configuration")
+			raise RuntimeError("No content provider found for configuration to run location configuration process")
 		inputval = common.StringInputDialog(14024, common.getAddonSetting(config + "Action"))
 		if inputval is not None and inputval != '':
 			locnames, locids = provider.location(inputval)
@@ -176,8 +190,8 @@ class ClueWeather:
 			try:
 				provider.validate()
 				common.debug("Content provider is valid, running weather forecast workflow")
-			except:
-				common.debug("Content provider is invalid, reset forecast skin properties")
+			except BaseException as err:
+				common.debug("Content provider is invalid, reset forecast skin properties: %s" %str(err))
 				common.NotificationMsg(32203, 20000)
 				provider.clear()
 				return

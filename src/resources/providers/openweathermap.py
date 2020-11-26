@@ -5,11 +5,6 @@ import socket
 import common
 from .abstract import ContentProvider
 
-if sys.version_info[0] == 3:
-	from urllib import request as urllib2
-else:
-	import urllib2
-
 if hasattr(sys.modules["__main__"], "xbmc"):
 	xbmc = sys.modules["__main__"].xbmc
 else:
@@ -58,12 +53,9 @@ class OpenWeatherMap(ContentProvider):
 
 
 	def validate(self):
-		_url = "https://api.openweathermap.org/data/2.5/weather?id=2172797&appid=%s" %self.apikey
-		try:
-			req = urllib2.urlopen(_url)
-			req.close()
-		except:
-			raise RuntimeError("Invalid provider configuration")
+		response = self._parse(common.urlcall("https://api.openweathermap.org/data/2.5/weather?id=2172797&appid=%s" %self.apikey, thrown=True))
+		if response is not None and response["cod"] != 200:
+			raise RuntimeError(response["message"])
 
 
 	def geoip(self):
@@ -75,7 +67,7 @@ class OpenWeatherMap(ContentProvider):
 			if data.has_key("countryCode"):
 				geoloc += "," + data["countryCode"]
 			common.debug('Identifying GeoIP location: %s' % geoloc, self.code())
-			url = self.LOCATION % ("\"" + geoloc + "\"")
+			url = self.LOCATION % (geoloc, self.apikey)
 			data = self._call(url)
 			common.debug('Found location data: %s' % data, self.code())
 			if data is not None and data.has_key("list"):
@@ -91,7 +83,7 @@ class OpenWeatherMap(ContentProvider):
 		locs = []
 		locids = []
 		common.debug('Searching for location: %s' % loc, self.code())
-		url = self.LOCATION % ("\"" + loc + "\"")
+		url = self.LOCATION % (loc, self.apikey)
 		data = self._call(url)
 		common.debug('Found location data: %s' % data, self.code())
 		if data is not None and data.has_key("list"):
@@ -116,7 +108,7 @@ class OpenWeatherMap(ContentProvider):
 			self.skinproperty('Current.Location', loc)
 			self.skinproperty('Current.Latitude', data['coord']['lat'])
 			self.skinproperty('Current.Longitude', data['coord']['lon'])
-			self.skinproperty('Current.Condition', data['weather'][0]["description"].capitalize())
+			self.skinproperty('Current.Condition', common.utf8(data['weather'][0]["description"]).capitalize())
 			self.skinproperty('Current.Temperature', self._2temperature(data['main']['temp']))
 			self.skinproperty('Current.Wind', self._2speed(data['wind']['speed'], iu='mps'))
 			self.skinproperty('Current.WindDirection', data['wind']['deg'], '°') if data['wind'].has_key('deg') else self.skinproperty('Current.WindDirection')
@@ -124,7 +116,7 @@ class OpenWeatherMap(ContentProvider):
 			self.skinproperty('Current.Pressure', self._2pressure(data['main']['pressure'],um=True))
 			self.skinproperty('Current.OutlookIcon', '%s.png' % self._fanart(data['weather'][0]["icon"]))
 			self.skinproperty('Current.FanartCode', self._fanart(data['weather'][0]["icon"]))
-			self.skinproperty('Current.Visibility', self._2distance(data['visibility'], um=True))
+			self.skinproperty('Current.Visibility', self._2distance(data['visibility'],iu='m',um=True))
 			self.skinproperty('Current.LocalTime', self._2shtime(data['dt']))
 			self.skinproperty('Current.LocalDate', self._2shdate(data['dt']))
 			self.skinproperty('Current.FeelsLike', self.feelslike(self._2temperature(data['main']['temp']), self._2speed(data['wind']['speed'], iu='mps'), data['main']['humidity']))
@@ -149,9 +141,9 @@ class OpenWeatherMap(ContentProvider):
 				for item in data['list']:
 					self.skinproperty('Hourly.%i.Time' % count, self._2shtime(item['dt']))
 					self.skinproperty('Hourly.%i.ShortDate' % count, self._2shdate(item['dt']))
-					self.skinproperty('Hourly.%i.Condition' % count, item['weather'][0]["description"].capitalize())
+					self.skinproperty('Hourly.%i.Condition' % count, common.utf8(item['weather'][0]["description"]).capitalize())
 					self.skinproperty('Hourly.%i.Temperature' % count, self._2temperature(item['main']['temp'], iu='c',um=True))
-					self.skinproperty('Hourly.%i.Outlook' % count, item['weather'][0]["description"].capitalize())
+					self.skinproperty('Hourly.%i.Outlook' % count, common.utf8(item['weather'][0]["description"]).capitalize())
 					self.skinproperty('Hourly.%i.OutlookIcon' % count, '%s.png' % self._fanart(item['weather'][0]["icon"]))
 					self.skinproperty('Hourly.%i.FanartCode' % count, self._fanart(item['weather'][0]["icon"]))
 					self.skinproperty('Hourly.%i.Wind' % count, self._2speed(item['wind']['speed']))

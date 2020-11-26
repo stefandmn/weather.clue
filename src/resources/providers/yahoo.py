@@ -125,7 +125,7 @@ class Yahoo(ContentProvider):
 			# Current - standard
 			self.skinproperty('Current.IsFetched', 'true')
 			self.skinproperty('Current.Location', data['location']['displayName'])
-			self.skinproperty('Current.Condition', data['observation']['conditionDescription'])
+			self.skinproperty('Current.Condition', common.utf8(data['observation']['conditionDescription']).capitalize())
 			self.skinproperty('Current.Temperature', self._2temperature(data['observation']['temperature']['now'], iu='f', ou='c'))
 			self.skinproperty('Current.UVIndex', str(data['observation']['uvIndex']))
 			self.skinproperty('Current.OutlookIcon', '%s.png' % str(data['observation']['conditionCode']))  # Kodi translates it to Current.ConditionIcon
@@ -158,7 +158,7 @@ class Yahoo(ContentProvider):
 					self.skinproperty('Hourly.%i.ShortDate' %count, self._2shdate(item['observationTime']['timestamp']))
 					self.skinproperty('Hourly.%i.Temperature' % count, self._2temperature(item['temperature']['now'], iu='f', um=True))
 					self.skinproperty('Hourly.%i.FeelsLike' % count, self._2temperature(item['temperature']['feelsLike'], iu='f', um=True))
-					self.skinproperty('Hourly.%i.Outlook' %count, item['conditionDescription'])
+					self.skinproperty('Hourly.%i.Outlook' %count, common.utf8(item['conditionDescription']).capitalize())
 					self.skinproperty('Hourly.%i.OutlookIcon' %count, '%s.png' % str(item['conditionCode']))
 					self.skinproperty('Hourly.%i.FanartCode' %count, item['conditionCode'])
 					self.skinproperty('Hourly.%i.Humidity' %count, item['humidity'])
@@ -175,7 +175,7 @@ class Yahoo(ContentProvider):
 					self.skinproperty('Day%i.Title' %count, self._2lnday(item['observationTime']['weekday']))
 					self.skinproperty('Day%i.HighTemp' % count, self._2temperature(item['temperature']['high'], iu='f', um=True))
 					self.skinproperty('Day%i.LowTemp' % count, self._2temperature(item['temperature']['low'], iu='f', um=True))
-					self.skinproperty('Day%i.Outlook' %count, item['conditionDescription'])
+					self.skinproperty('Day%i.Outlook' %count, common.utf8(item['conditionDescription']).capitalize())
 					self.skinproperty('Day%i.OutlookIcon' %count, '%s.png' % item['conditionCode'])
 					self.skinproperty('Day%i.FanartCode' %count, item['conditionCode'])
 					# Extended
@@ -185,7 +185,7 @@ class Yahoo(ContentProvider):
 					self.skinproperty('Daily.%i.LongDate' %count, self._2lndate(item['observationTime']['timestamp']))
 					self.skinproperty('Daily.%i.HighTemperature' % count, self._2temperature(item['temperature']['high'], iu='f', um=True))
 					self.skinproperty('Daily.%i.LowTemperature' % count, self._2temperature(item['temperature']['low'], iu='f', um=True))
-					self.skinproperty('Daily.%i.Outlook' %count, str(item['conditionDescription']))
+					self.skinproperty('Daily.%i.Outlook' %count, common.utf8(item['conditionDescription']).capitalize())
 					self.skinproperty('Daily.%i.OutlookIcon' %count, '%s.png' % str(item['conditionCode']))
 					self.skinproperty('Daily.%i.FanartCode' %count, str(item['conditionCode']))
 					self.skinproperty('Daily.%i.Humidity' %count, str(item['humidity']), '%')

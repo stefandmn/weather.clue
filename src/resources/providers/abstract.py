@@ -121,7 +121,7 @@ class ContentProvider(object):
 
 	@property
 	def apikey(self):
-		return common.setting("APIKey") if common.setting("APIKey") is not None else common.getSkinProperty(12600, "SkinProviderAPIKey")
+		return common.setting("APIKey") if common.setting("APIKey") is not None and common.setting("APIKey") != '' else common.getSkinProperty(12600, "SkinProviderAPIKey")
 
 
 	def _call(self, url):
