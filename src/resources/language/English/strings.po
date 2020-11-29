@@ -1,4 +1,4 @@
-# MCPi language file
+# Kodi language file
 # Addon Name: Clue Weather
 # Addon id: weather.clue
 # Addon Provider: AMSD

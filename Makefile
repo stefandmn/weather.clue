@@ -148,7 +148,11 @@ endif
 
 
 # Create a complete release: new build, publish it in the repository, update the versioning
-release: version build publish git
+release:
+	$(MAKE) version
+	$(MAKE) build
+	$(MAKE) publish
+	$(MAKE) git
 
 
 # Clean-up the release
