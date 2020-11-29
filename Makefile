@@ -79,7 +79,7 @@ version:
 
 
 # Build addon package in deployment format
-build:
+build: clean
 	mkdir -p $(OUTDIR) $(OUTDIR)/$(TARGETS)
 	cp -rf ${SRCDIR}/* $(OUTDIR)/
 	cp -rf LICENSE $(OUTDIR)/
@@ -158,6 +158,7 @@ release:
 # Clean-up the release
 clean:
 	rm -rf $(OUTDIR)
+	rm -rf $(OUTPUT)/targets/$(NAME).zip
 
 
 # Clean-up all build distributions, cache and stamps
