@@ -110,7 +110,7 @@ else
 	echo "Repository location is not specified in PUBLISH variable. Set it up and try again!"
 endif
 else
-	echo "Repository location is not specified in PUBLISH variable. Set it up and try again!"
+	echo "Build component(s) doesn't exist, try to run 'build' target first!"
 endif
 
 
