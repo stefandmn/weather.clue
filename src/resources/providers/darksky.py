@@ -48,26 +48,28 @@ class DarkSky(ContentProvider):
 
 
 	def validate(self):
-		response = self._parse(common.urlcall("https://api.darksky.net/forecast/%s/37.8267,-122.4233?exclude=minutely,hourly,daily,alerts,flags" %self.apikey, thrown=True))
-		if response is not None and response.has_key("error"):
+		response = self._parse(common.urlcall("https://api.darksky.net/forecast/%s/37.8267,-122.4233?exclude=minutely,hourly,daily,alerts,flags" %self.apikey))
+		if response is not None and "error" in response:
 			raise RuntimeError(response["error"])
+		elif response is None:
+			raise RuntimeError("No content provided")
 
 
 	def geoip(self):
 		loc = ''
 		locid = ''
 		data = self.ipinfo()
-		if data is not None and data.has_key("city"):
+		if data is not None and "city"in data:
 			geoloc = data["city"]
-			if data.has_key("regionName"):
+			if "regionName"in data:
 				geoloc += "," + data["regionName"]
-			if data.has_key("country"):
+			if "country" in data:
 				geoloc += "," + data["country"]
 			common.debug('Identifying GeoIP location: %s' % geoloc, self.code())
 			url = self.LOCATION % ("\"" + geoloc + "\"")
 			data = self._call(url)
 			common.debug('Found location data: %s' % data, self.code())
-			if data is not None and data.has_key("latitude"):
+			if data is not None and "latitude" in data:
 				self.coordinates(data["latitude"], data["longitude"])
 				loc = geoloc.replace(",", "-")
 				locid = str(self.latitude) + "," + str(self.longitude)
@@ -81,7 +83,7 @@ class DarkSky(ContentProvider):
 		url = self.LOCATION % ("\"" + loc + "\"")
 		data = self._call(url)
 		common.debug('Found location data: %s' % data, self.code())
-		if data is not None and data.has_key("latitude"):
+		if data is not None and "latitude" in data:
 			self.coordinates(data["latitude"], data["longitude"])
 			location = loc
 			locationid = str(self.latitude) + "," + str(self.longitude)
@@ -95,7 +97,7 @@ class DarkSky(ContentProvider):
 		url = self.FORECAST %(self.apikey, locid, self.lang, "si")
 		data = self._call(url)
 		# Current weather forecast
-		if data is not None and data.has_key('currently'):
+		if data is not None and "currently" in data:
 			item = data['currently']
 			# Current - standard
 			self.skinproperty('Current.IsFetched', 'true')
@@ -105,7 +107,7 @@ class DarkSky(ContentProvider):
 			self.skinproperty('Current.Condition', common.utf8(item["summary"]).capitalize())
 			self.skinproperty('Current.Temperature', self._2temperature(item['temperature']))
 			self.skinproperty('Current.Wind', self._2speed(item['windSpeed'], iu='mps'))
-			self.skinproperty('Current.WindDirection', item['windBearing'], '°') if item.has_key('windBearing') else self.skinproperty('Current.WindDirection')
+			self.skinproperty('Current.WindDirection', item['windBearing'], '°') if "windBearing" in item else self.skinproperty('Current.WindDirection')
 			self.skinproperty('Current.Humidity', 100*item['humidity'])
 			self.skinproperty('Current.Pressure', self._2pressure(item['pressure'], um=True))
 			self.skinproperty('Current.OutlookIcon', '%s.png' % self._fanart(item["icon"]))
@@ -123,7 +125,7 @@ class DarkSky(ContentProvider):
 			self.skinproperty('Forecast.Longitude', data['longitude'])
 			self.skinproperty('Forecast.Updated', self._2shdatetime(item['time']))
 		# Today forecast
-		if data is not None and data.has_key('daily') and data['daily'].has_key('data') and len(data['daily']['data']) > 0:
+		if data is not None and "daily" in data and "data" in data['daily'] and len(data['daily']['data']) > 0:
 			item = data['daily']['data'][0]
 			self.skinproperty('Today.IsFetched', 'true')
 			self.skinproperty('Today.Sunrise', self._2shtime(item['sunriseTime']))
@@ -131,7 +133,7 @@ class DarkSky(ContentProvider):
 			self.skinproperty('Today.HighTemperature', self._2temperature(item['temperatureHigh'], um=True))
 			self.skinproperty('Today.LowTemperature', self._2temperature(item['temperatureLow'], um=True))
 		# Daily weather forecast
-		if data is not None and data.has_key('daily') and data['daily'].has_key('data') and len(data['daily']['data']) > 1:
+		if data is not None and "daily" in data and "data" in data['daily'] and len(data['daily']['data']) > 1:
 			count = 0
 			index = 0
 			self.skinproperty('Daily.IsFetched', 'true')
@@ -154,7 +156,7 @@ class DarkSky(ContentProvider):
 					self.skinproperty('Daily.%i.FanartCode' % count, self._fanart(item["icon"]))
 					self.skinproperty('Daily.%i.Condition' % count, common.utf8(item["summary"]).capitalize())
 					self.skinproperty('Daily.%i.Wind' % count, self._2speed(item['windSpeed']))
-					self.skinproperty('Daily.%i.WindDirection' % count, item['windBearing'], '°') if item.has_key('windBearing') else self.skinproperty('Day.%i.WindDirection' % count)
+					self.skinproperty('Daily.%i.WindDirection' % count, item['windBearing'], '°') if "windBearing" in item else self.skinproperty('Day.%i.WindDirection' % count)
 					self.skinproperty('Daily.%i.Humidity' % count, 100*item['humidity'])
 					self.skinproperty('Daily.%i.Pressure' % count, self._2pressure(item['pressure'],um=True))
 					self.skinproperty('Daily.%i.DewPoint' % count, item['dewPoint'])
@@ -164,7 +166,7 @@ class DarkSky(ContentProvider):
 					count += 1
 				index += 1
 		# Hourly weather forecast
-		if data is not None and data.has_key('hourly') and data['hourly'].has_key('data') and len(data['hourly']['data']) > 0:
+		if data is not None and "hourly" in data and "data" in data['hourly'] and len(data['hourly']['data']) > 0:
 			count = 0
 			self.skinproperty('Hourly.IsFetched', 'true')
 			for item in data['hourly']['data']:
@@ -176,14 +178,14 @@ class DarkSky(ContentProvider):
 				self.skinproperty('Hourly.%i.OutlookIcon' % count, '%s.png' % self._fanart(item["icon"]))
 				self.skinproperty('Hourly.%i.FanartCode' % count, self._fanart(item["icon"]))
 				self.skinproperty('Hourly.%i.Wind' % count, self._2speed(item['windSpeed']))
-				self.skinproperty('Hourly.%i.WindDirection' % count, item['windBearing'], '°') if item.has_key('windBearing') else self.skinproperty('Hourly%i.WindDirection' % count)
+				self.skinproperty('Hourly.%i.WindDirection' % count, item['windBearing'], '°') if "windBearing" in item else self.skinproperty('Hourly%i.WindDirection' % count)
 				self.skinproperty('Hourly.%i.Humidity' % count, 100*item['humidity'])
 				self.skinproperty('Hourly.%i.Pressure' % count, self._2pressure(item['pressure']),um=True)
 				self.skinproperty('Hourly.%i.DewPoint' % count, item['dewPoint'])
 				self.skinproperty('Hourly.%i.UVIndex' % count, item['uvIndex'])
 				count += 1
 		# Alerts weather forecast
-		if data is not None and data.has_key('alerts') and len(data['alerts']) > 0:
+		if data is not None and "alerts" in data and len(data['alerts']) > 0:
 			count = 0
 			text = ''
 			self.skinproperty('Alerts.IsFetched', 'true')

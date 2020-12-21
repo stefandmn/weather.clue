@@ -75,21 +75,21 @@ class Yahoo(ContentProvider):
 		loc = ''
 		locid = ''
 		data = self.ipinfo()
-		if data is not None and data.has_key("city"):
+		if data is not None and "city" in data:
 			geoloc = data["city"]
-			if data.has_key("regionName"):
+			if "regionName" in data:
 				geoloc += "," + data["regionName"]
-			if data.has_key("country"):
+			if "country" in data:
 				geoloc += "," + data["country"]
 			common.debug('Identifying GeoIP location: %s' % geoloc, self.code())
 			url = self.LOCATION % ("\"" + geoloc + "\"")
 			data = self._call(url)
 			common.debug('Found location data: %s' % data, self.code())
-			if data is not None and isinstance(data, list) and data[0].has_key("woeid"):
+			if data is not None and isinstance(data, list) and "woeid" in data[0]:
 				data = data[0]
 				self.coordinates(data["lat"], data["lon"])
 				locid = data["woeid"]
-				if data.has_key("qualifiedName"):
+				if "qualifiedName" in data:
 					loc = data["qualifiedName"]
 				else:
 					loc = geoloc
@@ -106,7 +106,7 @@ class Yahoo(ContentProvider):
 		if data is not None and isinstance(data, list):
 			for item in data:
 				locationid = item["woeid"]
-				if item.has_key("qualifiedName"):
+				if "qualifiedName" in item:
 					location = item["qualifiedName"]
 				else:
 					location = item["city"] + "," + item["country"]
@@ -120,7 +120,7 @@ class Yahoo(ContentProvider):
 		url = self.FORECAST % locid
 		data = self._call(url)
 		# Current weather forecast
-		if data is not None and data.has_key('weathers'):
+		if data is not None and "weathers" in data:
 			data = data['weathers'][0]
 			# Current - standard
 			self.skinproperty('Current.IsFetched', 'true')
@@ -131,7 +131,7 @@ class Yahoo(ContentProvider):
 			self.skinproperty('Current.OutlookIcon', '%s.png' % str(data['observation']['conditionCode']))  # Kodi translates it to Current.ConditionIcon
 			self.skinproperty('Current.FanartCode', str(data['observation']['conditionCode']))
 			self.skinproperty('Current.Wind', self._2speed(data['observation']['windSpeed'], iu='mph'))
-			self.skinproperty('Current.WindDirection', data['observation']['windDirection'], '°') if data['observation'].has_key('windBearing') else self.skinproperty('Current.WindDirection')
+			self.skinproperty('Current.WindDirection', data['observation']['windDirection'], '°') if "windBearing" in data['observation'] else self.skinproperty('Current.WindDirection')
 			self.skinproperty('Current.Humidity', str(data['observation']['humidity']))
 			self.skinproperty('Current.DewPoint', self._dewpoint(self._2temperature(data['observation']['temperature']['now'], iu='f', ou='c'), int(data['observation']['humidity'])))
 			self.skinproperty('Current.FeelsLike', self._2temperature(data['observation']['temperature']['feelsLike'], iu='f', ou='c'))

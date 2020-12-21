@@ -126,18 +126,18 @@ class ContentProvider(object):
 
 	def _call(self, url):
 		response = common.urlcall(url)
-		return self._parse(response.decode('utf-8'))
+		return self._parse(response)
 
 
 	def _parse(self, content):
 		if content is not None:
-			common.debug("Parsing content: %s" % content)
+			common.debug('Parsing content: %s' %content)
 			try:
 				raw = content.replace('<br>', ' ')
 				raw = raw.replace('"NA"', '""')
 				output = json.loads(raw)
 			except BaseException as be:
-				common.debug('Failed to parse weather data: %s' %be)
+				common.error('Failed to parse weather data: %s' %be)
 				output = None
 			return output
 		else:

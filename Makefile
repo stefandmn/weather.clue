@@ -39,10 +39,10 @@ info:
 deploy:
 ifneq ($(RPIHOST),)
 ifeq ($(shell [[ -d $(ROOT)/$(SRCDIR) ]] && echo -n yes),yes)
-	/usr/bin/rsync -a -zvh --progress --delete -e ssh $(ROOT)/$(SRCDIR)/ root@$(RPIHOST):/clue/.kodi/addons/$(NAME)
+	/usr/bin/rsync -a -zvh --progress --delete -e ssh $(ROOT)/$(SRCDIR)/ root@$(RPIHOST):/home/.kodi/addons/$(NAME)
 endif
 ifeq ($(shell [[ -d $(ROOT)/$(SYSDIR) ]] && echo -n yes),yes)
-	/usr/bin/scp -r $(ROOT)/$(SYSDIR)/* root@$(RPIHOST):/clue/
+	/usr/bin/scp -r $(ROOT)/$(SYSDIR)/* root@$(RPIHOST):/home/
 endif
 else
 	echo "Your remote RPi device should have SSH service enabled, local public SSH key \
@@ -63,7 +63,7 @@ endif
 else
 ifneq ($(RPIHOST),)
 ifeq ($(shell [[ -d $(ROOT)/$(SRCDIR) ]] && echo -n yes),yes)
-	/usr/bin/rsync -a -zvh --progress --delete -e ssh $(ROOT)/$(SRCDIR)/ root@$(RPIHOST):/clue/.kodi/addons/$(NAME)
+	/usr/bin/rsync -a -zvh --progress --delete -e ssh $(ROOT)/$(SRCDIR)/ root@$(RPIHOST):/home/.kodi/addons/$(NAME)
 endif
 else
 	echo "For testing process you have to set TESTPATH variable to test on any Kodi\

@@ -25,7 +25,7 @@ class ClueWeather:
 		for cls in ContentProvider.__subclasses__():
 			try:
 				provider = cls()
-				if not self.PROVIDERS.has_key(provider.code()):
+				if not provider.code() in self.PROVIDERS:
 					self.PROVIDERS[provider.code()] = provider
 				else:
 					common.error("Invalid signature of content provider, it has the same name or id with another one: %s " %provider)
@@ -52,7 +52,7 @@ class ClueWeather:
 		provider = None
 		if not self.PROVIDERS:
 			self.readProviders()
-		if code is not None and self.PROVIDERS.has_key(code):
+		if code is not None and code in self.PROVIDERS:
 			provider = self.PROVIDERS[code]
 		return provider
 

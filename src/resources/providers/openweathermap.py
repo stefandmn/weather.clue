@@ -53,27 +53,29 @@ class OpenWeatherMap(ContentProvider):
 
 
 	def validate(self):
-		response = self._parse(common.urlcall("https://api.openweathermap.org/data/2.5/weather?id=2172797&appid=%s" %self.apikey, thrown=True))
+		response = self._parse(common.urlcall("https://api.openweathermap.org/data/2.5/weather?id=2172797&appid=%s" %self.apikey))
 		if response is not None and response["cod"] != 200:
 			raise RuntimeError(response["message"])
+		elif response is None:
+			raise RuntimeError("No content provided")
 
 
 	def geoip(self):
 		loc = ''
 		locid = ''
 		data = self.ipinfo()
-		if data is not None and data.has_key("city"):
+		if data is not None and "city" in data:
 			geoloc = data["city"]
-			if data.has_key("countryCode"):
+			if "countryCode" in data:
 				geoloc += "," + data["countryCode"]
 			common.debug('Identifying GeoIP location: %s' % geoloc, self.code())
 			url = self.LOCATION % (geoloc, self.apikey)
 			data = self._call(url)
 			common.debug('Found location data: %s' % data, self.code())
-			if data is not None and data.has_key("list"):
+			if data is not None and "list" in data:
 				item = data["list"][0]
 				loc = item["name"]
-				if item.has_key("sys") and item["sys"].has_key("country"):
+				if "sys" in item and "country" in item["sys"]:
 					loc += "-" + item["sys"]["country"]
 				locid = item["id"]
 		return loc, str(locid)
@@ -86,10 +88,10 @@ class OpenWeatherMap(ContentProvider):
 		url = self.LOCATION % (loc, self.apikey)
 		data = self._call(url)
 		common.debug('Found location data: %s' % data, self.code())
-		if data is not None and data.has_key("list"):
+		if data is not None and "list" in data:
 			for item in data["list"]:
 				location = item["name"]
-				if item.has_key("sys") and item["sys"].has_key("country"):
+				if "sys" in item and "country" in item["sys"]:
 					location += "-" + item["sys"]["country"]
 				locationid = item["id"]
 				locs.append(location)
@@ -102,7 +104,7 @@ class OpenWeatherMap(ContentProvider):
 		url = self.FORECAST % ('weather', locid, self.apikey, "metric", self.lang)
 		data = self._call(url)
 		# Current weather forecast
-		if data is not None and data.has_key('weather') and data.has_key("cod") and data["cod"] == 200:
+		if data is not None and "weather" in data and "cod" in data and data["cod"] == 200:
 			# current - standard
 			self.skinproperty('Current.IsFetched', 'true')
 			self.skinproperty('Current.Location', loc)
@@ -111,7 +113,7 @@ class OpenWeatherMap(ContentProvider):
 			self.skinproperty('Current.Condition', common.utf8(data['weather'][0]["description"]).capitalize())
 			self.skinproperty('Current.Temperature', self._2temperature(data['main']['temp']))
 			self.skinproperty('Current.Wind', self._2speed(data['wind']['speed'], iu='mps'))
-			self.skinproperty('Current.WindDirection', data['wind']['deg'], '°') if data['wind'].has_key('deg') else self.skinproperty('Current.WindDirection')
+			self.skinproperty('Current.WindDirection', data['wind']['deg'], '°') if "deg" in data['wind'] else self.skinproperty('Current.WindDirection')
 			self.skinproperty('Current.Humidity', data['main']['humidity'])
 			self.skinproperty('Current.Pressure', self._2pressure(data['main']['pressure'],um=True))
 			self.skinproperty('Current.OutlookIcon', '%s.png' % self._fanart(data['weather'][0]["icon"]))
@@ -147,7 +149,7 @@ class OpenWeatherMap(ContentProvider):
 					self.skinproperty('Hourly.%i.OutlookIcon' % count, '%s.png' % self._fanart(item['weather'][0]["icon"]))
 					self.skinproperty('Hourly.%i.FanartCode' % count, self._fanart(item['weather'][0]["icon"]))
 					self.skinproperty('Hourly.%i.Wind' % count, self._2speed(item['wind']['speed']))
-					self.skinproperty('Hourly.%i.WindDirection' % count, item['wind']['deg'], '°') if item['wind'].has_key('deg') else self.skinproperty('Hourly%i.WindDirection' % count)
+					self.skinproperty('Hourly.%i.WindDirection' % count, item['wind']['deg'], '°') if "deg" in item['wind'] else self.skinproperty('Hourly%i.WindDirection' % count)
 					self.skinproperty('Hourly.%i.Humidity' % count, item['main']['humidity'])
 					self.skinproperty('Hourly.%i.Pressure' % count, self._2pressure(item['main']['pressure'],um=True))
 					self.skinproperty('Hourly.%i.HighTemp' % count, self._2temperature(item['main']['temp_max'], iu='c'))
