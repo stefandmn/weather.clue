@@ -124,24 +124,24 @@ class ContentProvider(object):
 		return common.setting("APIKey") if common.setting("APIKey") is not None and common.setting("APIKey") != '' else common.getSkinProperty(12600, "SkinProviderAPIKey")
 
 
-	def _call(self, url):
-		response = common.urlcall(url)
+	def _call(self, url, headers=None):
+		response = common.urlcall(url, headers=headers)
 		return self._parse(response)
 
 
 	def _parse(self, content):
 		if content is not None:
-			common.debug('Parsing content: %s' %content)
+			common.trace('Parsing content: %s' %content)
 			try:
 				raw = content.replace('<br>', ' ')
 				raw = raw.replace('"NA"', '""')
 				output = json.loads(raw)
 			except BaseException as be:
 				common.error('Failed to parse weather data: %s' %be)
-				output = None
+				output = {}
 			return output
 		else:
-			return json.loads('')
+			return {}
 
 
 	def skinproperty(self, name, value=None, um=None):
@@ -245,7 +245,8 @@ class ContentProvider(object):
 		:return: a JSON message containing the specified message parts.
 		"""
 		url = "http://ip-api.com/json/"
-		return self._call(url)
+		headers = {"User-Agent": common.agent()}
+		return self._call(url, headers=headers)
 
 
 	@property
