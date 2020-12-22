@@ -36,14 +36,14 @@ class ClueWeather:
 	def getDetectedProvider(self):
 		provider = self.getProviderByCode(common.getSkinProperty(12600, "SkinProviderCode"))
 		if provider is None:
-			provider = self.getProviderByCode(common.getAddonSetting('ProviderCode'))
+			provider = self.getProviderByCode(common.setting('ProviderCode'))
 		return provider
 
 
 	def getDetectedAPIKey(self):
 		apikey = common.getSkinProperty(12600, "SkinProviderAPIKey")
 		if apikey is None or apikey == '':
-			apikey = common.getAddonSetting("APIKey")
+			apikey = common.setting("APIKey")
 		return apikey
 
 
@@ -87,43 +87,43 @@ class ClueWeather:
 			index = common.SelectDialog(32201, options)
 			if index >= 0:
 				provider = self.getProviderByName(options[index])
-				common.setAddonSetting("Enabled", "true")
+				common.setsetting("Enabled", "true")
 				if provider is not None:
 					provider.clear()
-					common.setAddonSetting("ProviderCode", provider.code())
-					common.setAddonSetting("ProviderCodeAction", provider.name())
+					common.setsetting("ProviderCode", provider.code())
+					common.setsetting("ProviderCodeAction", provider.name())
 					common.setSkinProperty(12600, "SkinProviderCode", provider.code())
 				else:
-					common.setAddonSetting("ProviderCode")
-					common.setAddonSetting("ProviderCodeAction")
+					common.setsetting("ProviderCode")
+					common.setsetting("ProviderCodeAction")
 					common.setSkinProperty(12600, "SkinProviderCode")
 				# reset dependent settings
-				common.setAddonSetting("APIKey")
-				common.setAddonSetting("APIKeyAction")
+				common.setsetting("APIKey")
+				common.setsetting("APIKeyAction")
 				for index in range(1,6):
-					common.setAddonSetting("Location%iAction" % index)
-					common.setAddonSetting("Location%i" % index)
+					common.setsetting("Location%iAction" % index)
+					common.setsetting("Location%i" % index)
 					common.debug('Reset location %i' %index)
 				# trigger provider validation
 				try:
 					provider.validate()
 					common.debug("Provider validation is not required")
-					common.setAddonSetting("ShowAPIKeyOption", "false")
-					common.setAddonSetting("ShowLocationOption", "true")
-					common.setAddonSetting("APIKey")
-					common.setAddonSetting("APIKeyAction")
+					common.setsetting("ShowAPIKeyOption", "false")
+					common.setsetting("ShowLocationOption", "true")
+					common.setsetting("APIKey")
+					common.setsetting("APIKeyAction")
 				except:
 					common.debug("Asking for provider validation")
-					common.setAddonSetting("ShowAPIKeyOption", "true")
-					common.setAddonSetting("ShowLocationOption", "false")
+					common.setsetting("ShowAPIKeyOption", "true")
+					common.setsetting("ShowLocationOption", "false")
 			else:
 				common.debug("Provider configuration was cancelled")
 		elif str(config) == "ProviderKey":
 			common.debug("Setting new provider API key")
 			inputval = common.StringInputDialog(32122, self.getDetectedAPIKey())
 			if inputval is not None and inputval != '':
-				common.setAddonSetting("APIKey", inputval)
-				common.setAddonSetting("APIKeyAction", "".rjust(len(inputval), "*"))
+				common.setsetting("APIKey", inputval)
+				common.setsetting("APIKeyAction", "".rjust(len(inputval), "*"))
 				common.setSkinProperty(12600, "SkinProviderAPIKey", inputval)
 				# trigger provider validation
 				try:
@@ -132,10 +132,10 @@ class ClueWeather:
 						raise RuntimeError("No content provider found for configuration to run the validation process")
 					provider.validate()
 					common.debug("Provider validation is completed")
-					common.setAddonSetting("ShowLocationOption", "true")
+					common.setsetting("ShowLocationOption", "true")
 				except RuntimeError as re:
 					common.debug("Provider validation returned an error for '%s' API key: %s" %(inputval, str(re)))
-					common.setAddonSetting("ShowLocationOption", "false")
+					common.setsetting("ShowLocationOption", "false")
 					common.DlgNotificationMsg(32121)
 			else:
 				common.debug("Provider API key configuration was cancelled")
@@ -149,14 +149,14 @@ class ClueWeather:
 		provider = self.getDetectedProvider()
 		if provider is None:
 			raise RuntimeError("No content provider found for configuration to run location configuration process")
-		inputval = common.StringInputDialog(14024, common.getAddonSetting(config + "Action"))
+		inputval = common.StringInputDialog(14024, common.setting(config + "Action"))
 		if inputval is not None and inputval != '':
 			locnames, locids = provider.location(inputval)
 			if locnames:
 				selindex = common.SelectDialog(396, locnames)
 				if selindex >= 0:
-					common.setAddonSetting(config + "Action", locnames[selindex])
-					common.setAddonSetting(config, locids[selindex])
+					common.setsetting(config + "Action", locnames[selindex])
+					common.setsetting(config, locids[selindex])
 					common.debug('Selected location: (%s - %s)' %(locnames[selindex], locids[selindex]))
 			else:
 				common.OkDialog(284)
@@ -177,16 +177,16 @@ class ClueWeather:
 		if not common.setting('Enabled'):
 			return
 		# check provider configuration
-		provider = self.getProviderByCode(common.getAddonSetting('ProviderCode'))
+		provider = self.getProviderByCode(common.setting('ProviderCode'))
 		common.debug("Found provider to run forecast workflow: %s" %provider)
 		if provider is None:
 			common.NotificationMsg(32202, 15000)
 			return
-		if provider is not None and ((common.setting('APIKey') == '' or common.setting('APIKey') is None) and common.any2bool(common.getAddonSetting("ShowAPIKeyOption"))):
+		if provider is not None and ((common.setting('APIKey') == '' or common.setting('APIKey') is None) and common.any2bool(common.setting("ShowAPIKeyOption"))):
 			common.NotificationMsg(32123, 15000)
 			return
 		# validate provider configuration
-		if common.any2bool(common.getAddonSetting("ShowAPIKeyOption")):
+		if common.any2bool(common.setting("ShowAPIKeyOption")):
 			try:
 				provider.validate()
 				common.debug("Content provider is valid, running weather forecast workflow")
@@ -207,8 +207,8 @@ class ClueWeather:
 				found = True
 			if found:
 				common.setSkinProperty(12600, 'Location%i' %id)
-				common.setAddonSetting('Location%iAction' %id)
-				common.setAddonSetting('Location%i' %id)
+				common.setsetting('Location%iAction' % id)
+				common.setsetting('Location%i' % id)
 			else:
 				common.setSkinProperty(12600, 'Location%i' %id, locname)
 		common.setSkinProperty(12600, 'Locations', str(count))
