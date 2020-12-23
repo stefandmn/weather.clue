@@ -48,11 +48,13 @@ class DarkSky(ContentProvider):
 
 
 	def validate(self):
-		response = self._parse(common.urlcall("https://api.darksky.net/forecast/%s/37.8267,-122.4233?exclude=minutely,hourly,daily,alerts,flags" %self.apikey))
-		if response is not None and "error" in response:
-			raise RuntimeError(response["error"])
+		response = common.urlcall("https://api.darksky.net/forecast/%s/37.8267,-122.4233?exclude=minutely,hourly,daily,alerts,flags" %self.apikey)
+		if response is not None:
+			response = self._parse(response)
+			if "error" in response:
+				raise RuntimeError(response["error"])
 		elif response is None:
-			raise RuntimeError("No content provided")
+			raise RuntimeError("No content provided due to an HTTP error")
 
 
 	def geoip(self):

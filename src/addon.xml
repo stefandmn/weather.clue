@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="weather.clue" version="2.0.1" name="Clue Weather" provider-name="AMSD">
+<addon id="weather.clue" version="2.0.2" name="Clue Weather" provider-name="AMSD">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="module.clue" version="2.0.0"/>

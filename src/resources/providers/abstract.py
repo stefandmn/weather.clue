@@ -279,8 +279,7 @@ class ContentProvider(object):
 
 
 	def _2shday(self, value):
-		if not isinstance(value, int):
-			return time.strftime('%a', time.localtime(value))
+		value = int(time.strftime('%w', time.localtime(int(value))))
 		if value == 0:
 			return xbmc.getLocalizedString(47)
 		elif value == 1:
@@ -296,9 +295,9 @@ class ContentProvider(object):
 		elif value == 6:
 			return xbmc.getLocalizedString(46)
 
+
 	def _2lnday(self, value):
-		if not isinstance(value, int):
-			value = time.strftime('%w', time.localtime(value))
+		value = int(time.strftime('%w', time.localtime(int(value))))
 		if value == 0:
 			return xbmc.getLocalizedString(17)
 		elif value == 1:
