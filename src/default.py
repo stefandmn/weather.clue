@@ -82,9 +82,9 @@ class ClueWeather:
 	def setProvider(self, config):
 		"""Runs configuration flow to setup or to change the provider"""
 		if str(config) == "ProviderCode":
-			common.debug("Setting new provider")
 			options = self.getProviderNames()
-			index = common.SelectDialog(32201, options)
+			common.debug("Selecting new provider from the list: %s" %str(options))
+			index = common.SelectDialog(title=32201, options=options)
 			if index >= 0:
 				provider = self.getProviderByName(options[index])
 				common.setsetting("Enabled", "true")
@@ -153,7 +153,7 @@ class ClueWeather:
 		if inputval is not None and inputval != '':
 			locnames, locids = provider.location(inputval)
 			if locnames:
-				selindex = common.SelectDialog(396, locnames)
+				selindex = common.SelectDialog(title=396, options=locnames)
 				if selindex >= 0:
 					common.setsetting(config + "Action", locnames[selindex])
 					common.setsetting(config, locids[selindex])
