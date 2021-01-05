@@ -5,34 +5,31 @@ import socket
 import common
 from .abstract import ContentProvider
 
-if hasattr(sys.modules["__main__"], "xbmc"):
-	xbmc = sys.modules["__main__"].xbmc
-else:
-	import xbmc
 
 
 class OpenWeatherMap(ContentProvider):
 	LOCATION = 'https://api.openweathermap.org/data/2.5/find?q=%s&type=like&sort=population&cnt=10&appid=%s'
 	FORECAST = 'https://api.openweathermap.org/data/2.5/%s?id=%s&appid=%s&units=%s&lang=%s'
-	ART_DATA = {"01d": "Clear/Day",
-				"01n": "Clear/Night",
-				"02d": "Cloudy/Partly/Day",
-				"02n": "Cloudy/Partly/Night",
-				"03d": "Cloudy/Mostly/Day",
-				"03n": "Cloudy/Mostly Night",
-				"04d": "Cloudy/Windy/Day",
-				"04n": "Cloudy/Windy/Night",
-				"09d": "Rain/Showers/Day",
-				"09n": "Rain/Showers/Night",
-				"10d": "Rain/Day",
-				"10n": "Rain/Night",
-				"11d": "Rain/Thunderstorm/Day",
-				"11n": "Rain/Thunderstorm/Night",
-				"13d": "Snow/Day",
-				"13n": "Snow/Night",
-				"50d": "Fog/Day",
-				"50n": "Fog/Night"
-				}
+	ART_DATA = {
+		"01d": "Clear/Day",
+		"01n": "Clear/Night",
+		"02d": "Cloudy/Partly/Day",
+		"02n": "Cloudy/Partly/Night",
+		"03d": "Cloudy/Mostly/Day",
+		"03n": "Cloudy/Mostly Night",
+		"04d": "Cloudy/Windy/Day",
+		"04n": "Cloudy/Windy/Night",
+		"09d": "Rain/Showers/Day",
+		"09n": "Rain/Showers/Night",
+		"10d": "Rain/Day",
+		"10n": "Rain/Night",
+		"11d": "Rain/Thunderstorm/Day",
+		"11n": "Rain/Thunderstorm/Night",
+		"13d": "Snow/Day",
+		"13n": "Snow/Night",
+		"50d": "Fog/Day",
+		"50n": "Fog/Night"
+		}
 
 
 	def __init__(self):

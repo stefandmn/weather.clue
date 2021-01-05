@@ -16,10 +16,65 @@ else:
 class Yahoo(ContentProvider):
 	LOCATION = 'https://www.yahoo.com/news/_tdnews/api/resource/WeatherSearch;text=%s'
 	FORECAST = 'https://www.yahoo.com/news/_tdnews/api/resource/WeatherService;woeids=%s'
+	ART_DATA = {
+		0: "Others/Tornado",  # tornado
+		1: "Rain/Thunderstorm/Neutral",  # tropical storm
+		2: "Others/Hurricane",  # hurricane
+		3: "Rain/Thunderstorm/Neutral",  # severe thunderstorms
+		4: "Rain/Thunderstorm/Neutral",  # thunderstorms
+		5: "Rain/Mix/Neutral",  # mixed rain and snow
+		6: "Rain/Mix/Neutral",  # mixed rain and sleet
+		7: "Rain/Mix/Neutral",  # mixed snow and sleet
+		8: "Snow/Windy/Neutral",  # freezing drizzle
+		9: "Rain/Showers/Neutral",  # drizzle
+		10: "Rain/Mix/Neutral",  # freezing rain
+		11: "Rain/Showers/Neutral",  # showers
+		12: "Rain/Showers/Neutral",  # showers
+		13: "Snow/Neutral",  # snow flurries
+		14: "Snow/Windy/Neutral",  # light snow showers
+		15: "Snow/Thunderstorm/Neutral",  # blowing snow
+		16: "Snow/Neutral",  # snow
+		17: "Others/Raindrops",  # hail
+		18: "Others/Raindrops",  # sleet
+		19: "Fog/Neutral",  # dust
+		20: "Fog/Neutral",  # foggy
+		21: "Fog/Neutral",  # haze
+		22: "Fog/Neutral",  # smoky
+		23: "Fog/Neutral",  # blustery
+		24: "Cloudy/Windy/Neutral",  # windy
+		25: "Snow/Neutral",  # cold
+		26: "Cloudy/Neutral",  # cloudy
+		27: "Cloudy/Mostly Night",  # mostly cloudy (night)
+		28: "Cloudy/Mostly/Day",  # mostly cloudy (day)
+		29: "Cloudy/Partly/Night",  # partly cloudy (night)
+		30: "Cloudy/Partly/Day",  # partly cloudy (day)
+		31: "Clear/Night",  # clear (night)
+		32: "Sunny/Day",  # sunny
+		33: "Clear/Night",  # fair (night)
+		34: "Clear/Day",  # fair (day)
+		35: "Rain/Mix/Neutral",  # mixed rain and hail
+		36: "Others/Heat",  # hot
+		37: "Rain/Thunderstorm/Neutral",  # isolated thunderstorms
+		38: "Rain/Thunderstorm/Neutral",  # scattered thunderstorms
+		39: "Rain/Thunderstorm/Neutral",  # scattered thunderstorms
+		40: "Rain/Showers/Neutral",  # scattered showers
+		41: "Snow/Thunderstorm/Neutral",  # heavy snow
+		42: "Snow/Windy/Neutral",  # scattered snow showers
+		43: "Snow/Thunderstorm/Neutral",  # heavy snow
+		44: "Cloudy/Partly/Neutral",  # partly cloudy
+		45: "Rain/Showers/Neutral",  # thundershowers
+		46: "Snow/Neutral",  # snow showers
+		47: "Rain/Showers/Neutral"   # isolated thundershowers"
+	}
 
 
 	def __init__(self):
 		socket.setdefaulttimeout(10)
+
+
+	def _fanart(self, code):
+		"""Detect and return fanart code"""
+		return self.ART_BASE[self.ART_DATA[int(code)]]
 
 
 	def name(self):
@@ -128,8 +183,8 @@ class Yahoo(ContentProvider):
 			self.skinproperty('Current.Condition', common.utf8(data['observation']['conditionDescription']).capitalize())
 			self.skinproperty('Current.Temperature', self._2temperature(data['observation']['temperature']['now'], iu='f', ou='c'))
 			self.skinproperty('Current.UVIndex', str(data['observation']['uvIndex']))
-			self.skinproperty('Current.OutlookIcon', '%s.png' % str(data['observation']['conditionCode']))  # Kodi translates it to Current.ConditionIcon
-			self.skinproperty('Current.FanartCode', str(data['observation']['conditionCode']))
+			self.skinproperty('Current.OutlookIcon', '%s.png' % self._fanart(data['observation']['conditionCode']))
+			self.skinproperty('Current.FanartCode', self._fanart(data['observation']['conditionCode']))
 			self.skinproperty('Current.Wind', self._2speed(data['observation']['windSpeed'], iu='mph'))
 			self.skinproperty('Current.WindDirection', data['observation']['windDirection'], '°') if "windBearing" in data['observation'] else self.skinproperty('Current.WindDirection')
 			self.skinproperty('Current.Humidity', str(data['observation']['humidity']))
@@ -159,8 +214,8 @@ class Yahoo(ContentProvider):
 					self.skinproperty('Hourly.%i.Temperature' % count, self._2temperature(item['temperature']['now'], iu='f', um=True))
 					self.skinproperty('Hourly.%i.FeelsLike' % count, self._2temperature(item['temperature']['feelsLike'], iu='f', um=True))
 					self.skinproperty('Hourly.%i.Outlook' %count, common.utf8(item['conditionDescription']).capitalize())
-					self.skinproperty('Hourly.%i.OutlookIcon' %count, '%s.png' % str(item['conditionCode']))
-					self.skinproperty('Hourly.%i.FanartCode' %count, item['conditionCode'])
+					self.skinproperty('Hourly.%i.OutlookIcon' %count, '%s.png' % self._fanart(str(item['conditionCode'])))
+					self.skinproperty('Hourly.%i.FanartCode' %count, self._fanart(item['conditionCode']))
 					self.skinproperty('Hourly.%i.Humidity' %count, item['humidity'])
 					self.skinproperty('Hourly.%i.Precipitation' %count, item['precipitationProbability'])
 					self.skinproperty('Hourly.%i.WindDirection' %count, item['windDirection'], '°')
@@ -176,8 +231,8 @@ class Yahoo(ContentProvider):
 					self.skinproperty('Day%i.HighTemp' % count, self._2temperature(item['temperature']['high'], iu='f', um=True))
 					self.skinproperty('Day%i.LowTemp' % count, self._2temperature(item['temperature']['low'], iu='f', um=True))
 					self.skinproperty('Day%i.Outlook' %count, common.utf8(item['conditionDescription']).capitalize())
-					self.skinproperty('Day%i.OutlookIcon' %count, '%s.png' % item['conditionCode'])
-					self.skinproperty('Day%i.FanartCode' %count, item['conditionCode'])
+					self.skinproperty('Day%i.OutlookIcon' %count, '%s.png' % self._fanart(item['conditionCode']))
+					self.skinproperty('Day%i.FanartCode' %count, self._fanart(item['conditionCode']))
 					# Extended
 					self.skinproperty('Daily.%i.ShortDay' %count, self._2shday(item['observationTime']['weekday']))
 					self.skinproperty('Daily.%i.LongDay' %count, self._2lnday(item['observationTime']['weekday']))
@@ -186,8 +241,8 @@ class Yahoo(ContentProvider):
 					self.skinproperty('Daily.%i.HighTemperature' % count, self._2temperature(item['temperature']['high'], iu='f', um=True))
 					self.skinproperty('Daily.%i.LowTemperature' % count, self._2temperature(item['temperature']['low'], iu='f', um=True))
 					self.skinproperty('Daily.%i.Outlook' %count, common.utf8(item['conditionDescription']).capitalize())
-					self.skinproperty('Daily.%i.OutlookIcon' %count, '%s.png' % str(item['conditionCode']))
-					self.skinproperty('Daily.%i.FanartCode' %count, str(item['conditionCode']))
+					self.skinproperty('Daily.%i.OutlookIcon' %count, '%s.png' % self._fanart(item['conditionCode']))
+					self.skinproperty('Daily.%i.FanartCode' %count, self._fanart(item['conditionCode']))
 					self.skinproperty('Daily.%i.Humidity' %count, str(item['humidity']), '%')
 					self.skinproperty('Daily.%i.Precipitation' %count, str(item['precipitationProbability']), '%')
 					self.skinproperty('Daily.%i.DewPoint' % count, self._dewpoint(self._2temperature(item['temperature']['low'], iu='f', ou='c'), item['humidity']))

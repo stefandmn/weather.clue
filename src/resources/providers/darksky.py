@@ -5,29 +5,25 @@ import socket
 import common
 from .abstract import ContentProvider
 
-if hasattr(sys.modules["__main__"], "xbmc"):
-	xbmc = sys.modules["__main__"].xbmc
-else:
-	import xbmc
-
 
 class DarkSky(ContentProvider):
 	LOCATION = 'https://darksky.net/geo?q=%s'
 	FORECAST = 'https://api.darksky.net/forecast/%s/%s?exclude=minutely&lang=%s&units=%s'
-	ART_DATA = {"clear-day": "Clear/Day",
-				"clear-night": "Clear/Night",
-				"rain": "Rain/Neutral",
-				"snow": "Snow/Neutral",
-				"sleet": "Rain/Showers/Neutral",
-				"wind":	"Others/Windy",
-				"fog": "Fog/Neutral",
-				"cloudy": "Cloudy/Neutral",
-				"partly-cloudy-day": "Cloudy/Partly/Day",
-				"partly-cloudy-night": "Cloudy/Partly/Night",
-				"hail": "Rain/Mix/Neutral",
-				"thunderstorm": "Rain/Night",
-				"tornado": "Others/Tornado"
-				}
+	ART_DATA = {
+		"clear-day": "Clear/Day",
+		"clear-night": "Clear/Night",
+		"rain": "Rain/Neutral",
+		"snow": "Snow/Neutral",
+		"sleet": "Rain/Showers/Neutral",
+		"wind":	"Others/Windy",
+		"fog": "Fog/Neutral",
+		"cloudy": "Cloudy/Neutral",
+		"partly-cloudy-day": "Cloudy/Partly/Day",
+		"partly-cloudy-night": "Cloudy/Partly/Night",
+		"hail": "Rain/Mix/Neutral",
+		"thunderstorm": "Rain/Night",
+		"tornado": "Others/Tornado"
+		}
 
 
 	def __init__(self):
