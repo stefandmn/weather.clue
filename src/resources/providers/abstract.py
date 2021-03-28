@@ -125,6 +125,10 @@ class ContentProvider(object):
 
 
 	def _call(self, url, headers=None):
+		if headers is None:
+			headers = {}
+		headers["Upgrade-Insecure-Requests"] = "1"
+		headers["User-Agent"] = common.mozilla_agent()
 		response = common.urlcall(url, headers=headers)
 		return self._parse(response)
 
